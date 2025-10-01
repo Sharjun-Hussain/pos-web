@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   AudioWaveform,
   BookOpen,
@@ -12,19 +12,19 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
-} from "lucide-react"
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavMain } from "@/components/nav-main";
+import { NavProjects } from "@/components/nav-projects";
+import { NavUser } from "@/components/nav-user";
+import { TeamSwitcher } from "@/components/team-switcher";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 // This is sample data.
 const data = {
@@ -114,24 +114,52 @@ const data = {
       ],
     },
     {
-      title: "Settings",
+      title: "Configuration",
       url: "#",
       icon: Settings2,
       items: [
         {
-          title: "General",
+          title: "Main Category",
           url: "#",
         },
         {
-          title: "Team",
+          title: "Sub Category",
           url: "#",
         },
         {
-          title: "Billing",
+          title: "Brand",
           url: "#",
         },
         {
-          title: "Limits",
+          title: "Branch",
+          url: "#",
+        },
+        {
+          title: "Supplier",
+          url: "#",
+        },
+        {
+          title: "City",
+          url: "#",
+        },
+        {
+          title: "Bank",
+          url: "#",
+        },
+        {
+          title: "Account Detail",
+          url: "#",
+        },
+        {
+          title: "Expense Type",
+          url: "#",
+        },
+        {
+          title: "Unit Measurement",
+          url: "#",
+        },
+        {
+          title: "Unit Container",
           url: "#",
         },
       ],
@@ -154,11 +182,9 @@ const data = {
       icon: Map,
     },
   ],
-}
+};
 
-export function AppSidebar({
-  ...props
-}) {
+export function AppSidebar({ ...props }) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
