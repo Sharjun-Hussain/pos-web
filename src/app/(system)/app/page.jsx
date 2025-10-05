@@ -1,165 +1,506 @@
-// src/app/pos/page.tsx
 "use client";
 
-import { useState, useEffect, useReducer } from "react";
+import { useState, useEffect, useReducer, useRef } from "react";
 import { Input } from "@/components/ui/input";
-import { DashboardLayoutSkeleton } from "@/app/skeletons/Dashboard-skeleton";
-import { ProductCard } from "@/components/pos/product-card";
-import { CartDisplay } from "@/components/pos/cart-display";
-import { PosScreenSkeleton } from "@/components/pos/pos-screen-skeleton";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  UserPlus,
+  Trash2,
+  Plus,
+  Minus,
+  FileText,
+  ListRestart,
+} from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
-// --- Mock Data ---
-// In a real app, this would come from an API
+// --- Mock Data (Replace with your API calls) ---
 const MOCK_PRODUCTS = [
   {
     id: "1",
+    barcode: "8990001001",
     name: "Espresso",
-    price: 450.0,
-    stock: 100,
-    imageUrl:
-      "https://images.unsplash.com/photo-1579992305393-3a7d2c801124?q=80&w=400",
+    retailPrice: 450.0,
+    wholesalePrice: 400.0,
   },
   {
     id: "2",
+    barcode: "8990001002",
     name: "Latte",
-    price: 600.0,
-    stock: 100,
-    imageUrl:
-      "https://images.unsplash.com/photo-1561729864-500851214227?q=80&w=400",
+    retailPrice: 600.0,
+    wholesalePrice: 550.0,
   },
   {
     id: "3",
+    barcode: "8990001003",
     name: "Cappuccino",
-    price: 600.0,
-    stock: 100,
-    imageUrl:
-      "https://images.unsplash.com/photo-1557006021-b45654010a3e?q=80&w=400",
+    retailPrice: 600.0,
+    wholesalePrice: 550.0,
   },
   {
     id: "4",
+    barcode: "8990001004",
     name: "Croissant",
-    price: 550.0,
-    stock: 50,
-    imageUrl:
-      "https://images.unsplash.com/photo-1587241321921-91a834d6d194?q=80&w=400",
+    retailPrice: 550.0,
+    wholesalePrice: 500.0,
   },
   {
     id: "5",
-    name: "Brownie",
-    price: 700.0,
-    stock: 40,
-    imageUrl:
-      "https://images.unsplash.com/photo-1627834377411-8da5f4f8993a?q=80&w=400",
+    barcode: "8990001005",
+    name: "Iced Americano",
+    retailPrice: 500.0,
+    wholesalePrice: 450.0,
   },
   {
     id: "6",
-    name: "Iced Tea",
-    price: 500.0,
-    stock: 80,
-    imageUrl:
-      "https://images.unsplash.com/photo-1556679343-c7306c19761a?q=80&w=400",
-  },
-  {
-    id: "7",
-    name: "Affogato",
-    price: 850.0,
-    stock: 30,
-    imageUrl:
-      "https://images.unsplash.com/photo-1626081974738-984c37482701?q=80&w=400",
-  },
-  {
-    id: "8",
-    name: "Muffin",
-    price: 650.0,
-    stock: 45,
-    imageUrl:
-      "https://images.unsplash.com/photo-1550617931-e2223b3a6283?q=80&w=400",
+    barcode: "8990001006",
+    name: "Chocolate Muffin",
+    retailPrice: 650.0,
+    wholesalePrice: 600.0,
   },
 ];
 
-// --- Cart State Management (Reducer) ---
-function cartReducer(state, action) {
+const MOCK_CUSTOMERS = [
+  { id: "1", name: "Nimal Perera", phone: "0771234567" },
+  { id: "2", name: "Sunil Traders", phone: "0112345678" },
+  { id: "3", name: "Kamala Silva", phone: "0718901234" },
+];
+
+// --- State Management with useReducer ---
+function appReducer(state, action) {
   switch (action.type) {
-    case "ADD_TO_CART": {
-      const existingItem = state.find((item) => item.id === action.payload.id);
+    case "ADD_ITEM": {
+      const { product, priceTier } = action.payload;
+      const price =
+        priceTier === "retail" ? product.retailPrice : product.wholesalePrice;
+      const existingItem = state.cart.find((item) => item.id === product.id);
       if (existingItem) {
-        return state.map((item) =>
-          item.id === action.payload.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
+        return {
+          ...state,
+          cart: state.cart.map((item) =>
+            item.id === product.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          ),
+        };
       }
-      return [...state, { ...action.payload, quantity: 1 }];
+      return {
+        ...state,
+        cart: [
+          ...state.cart,
+          { id: product.id, name: product.name, quantity: 1, price },
+        ],
+      };
     }
-    case "REMOVE_FROM_CART":
-      return state.filter((item) => item.id !== action.payload);
-    case "INCREMENT_QUANTITY":
-      return state.map((item) =>
-        item.id === action.payload
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      );
-    case "DECREMENT_QUANTITY":
-      return state
-        .map((item) =>
-          item.id === action.payload
-            ? { ...item, quantity: Math.max(1, item.quantity - 1) } // Prevents quantity < 1
-            : item
-        )
-        .filter((item) => item.quantity > 0); // Optionally remove if quantity becomes 0
+    case "REMOVE_ITEM":
+      return {
+        ...state,
+        cart: state.cart.filter((item) => item.id !== action.payload),
+      };
+    case "UPDATE_QUANTITY": {
+      const { id, quantity } = action.payload;
+      if (quantity <= 0)
+        return { ...state, cart: state.cart.filter((item) => item.id !== id) };
+      return {
+        ...state,
+        cart: state.cart.map((item) =>
+          item.id === id ? { ...item, quantity } : item
+        ),
+      };
+    }
+    case "SET_CUSTOMER":
+      return { ...state, customer: action.payload };
+    case "SET_PRICE_TIER": {
+      return {
+        ...state,
+        priceTier: action.payload,
+        cart: state.cart.map((item) => {
+          const product = MOCK_PRODUCTS.find((p) => p.id === item.id);
+          return {
+            ...item,
+            price:
+              action.payload === "retail"
+                ? product.retailPrice
+                : product.wholesalePrice,
+          };
+        }),
+      };
+    }
+    case "CLEAR_CART":
+      return { ...state, customer: null, cart: [] };
     default:
       return state;
   }
 }
 
-export default function PosPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState([]);
-  const [cart, dispatch] = useReducer(cartReducer, []);
+function CustomerDialog({ customers, onSelectCustomer }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const filteredCustomers = customers.filter(
+    (c) =>
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.phone.includes(searchTerm)
+  );
 
-  // Simulate fetching data on component mount
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Select Customer</DialogTitle>
+      </DialogHeader>
+      <div className="flex flex-col gap-4">
+        <Input
+          placeholder="Search by name or phone..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+          {filteredCustomers.map((customer) => (
+            <Button
+              key={customer.id}
+              variant="ghost"
+              className="justify-start"
+              onClick={() => onSelectCustomer(customer)}
+            >
+              <div className="text-left">
+                <p>{customer.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {customer.phone}
+                </p>
+              </div>
+            </Button>
+          ))}
+        </div>
+      </div>
+    </DialogContent>
+  );
+}
+
+export default function PosPage() {
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+
+  const searchInputRef = useRef(null);
+  const searchWrapperRef = useRef(null);
+
+  const initialState = { cart: [], customer: null, priceTier: "retail" };
+  const [state, dispatch] = useReducer(appReducer, initialState);
+
+  // Debounce search input
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (searchQuery.length < 1) {
+      setIsSearchOpen(false);
+      return;
+    }
+    const handler = setTimeout(() => {
+      const results = MOCK_PRODUCTS.filter(
+        (p) =>
+          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.barcode.includes(searchQuery)
+      );
+      setSearchResults(results);
+      setIsSearchOpen(results.length > 0);
+      setHighlightedIndex(-1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Keyboard Shortcuts and Global Click Listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "F2") {
+        e.preventDefault();
+        console.log("ACTION: Process Cash Payment");
+      }
+      if (e.key === "F3") {
+        e.preventDefault();
+        console.log("ACTION: Process Card Payment");
+      }
+      if (e.key === "F4") {
+        e.preventDefault();
+        console.log("ACTION: Hold Sale");
+      }
+
+      if (isSearchOpen) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setHighlightedIndex((prev) => (prev + 1) % searchResults.length);
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setHighlightedIndex(
+            (prev) => (prev - 1 + searchResults.length) % searchResults.length
+          );
+        }
+        if (e.key === "Enter" && highlightedIndex > -1) {
+          e.preventDefault();
+          handleAddToCart(searchResults[highlightedIndex]);
+        }
+        if (e.key === "Escape") {
+          setIsSearchOpen(false);
+        }
+      }
+    };
+    const handleClickOutside = (e) => {
+      if (
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(e.target)
+      ) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSearchOpen, searchResults, highlightedIndex]);
+
+  // Simulate fetching initial data
+  useEffect(() => {
+    setTimeout(() => {
       setProducts(MOCK_PRODUCTS);
-      setIsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
+      setCustomers(MOCK_CUSTOMERS);
+      searchInputRef.current?.focus();
+    }, 500);
   }, []);
 
   const handleAddToCart = (product) => {
-    dispatch({ type: "ADD_TO_CART", payload: product });
+    dispatch({
+      type: "ADD_ITEM",
+      payload: { product, priceTier: state.priceTier },
+    });
+    setSearchQuery("");
+    setIsSearchOpen(false);
+    searchInputRef.current?.focus();
   };
 
-  if (isLoading) {
-    return <PosScreenSkeleton />;
-  }
+  const handleSelectCustomer = (customer) => {
+    dispatch({ type: "SET_CUSTOMER", payload: customer });
+    setIsCustomerModalOpen(false);
+  };
+
+  const subtotal = state.cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const tax = subtotal * 0.08;
+  const total = subtotal + tax;
 
   return (
-    <div className="h-screen w-full bg-muted/40 flex flex-col">
-      <header className="flex h-14 items-center justify-between border-b bg-background px-4">
-        {/* You can add header elements here */}
-        <h1 className="font-bold text-lg">POS Terminal - Colombo, Sri Lanka</h1>
-      </header>
-      <main className="grid flex-1 grid-cols-1 lg:grid-cols-3 gap-4 p-4 overflow-auto">
-        {/* Left Column */}
-        <div className="lg:col-span-1">
-          <CartDisplay cart={cart} dispatch={dispatch} />
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <Input placeholder="Search products..." />
-          <div className="grid flex-1 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-auto">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+    <Dialog open={isCustomerModalOpen} onOpenChange={setIsCustomerModalOpen}>
+      <div className="h-screen bg-muted/20 flex flex-col text-sm">
+        {/* TOP COMMAND BAR */}
+        <header className="flex items-center gap-3 border-b bg-background p-3">
+          <SidebarTrigger />
+          <div className="relative flex-1" ref={searchWrapperRef}>
+            <Input
+              ref={searchInputRef}
+              placeholder="Scan Barcode or Search Products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-11 text-base"
+            />
+            {isSearchOpen && (
+              <div className="absolute top-full mt-1 w-full bg-background border rounded-md shadow-lg z-10">
+                {searchResults.map((product, index) => (
+                  <button
+                    key={product.id}
+                    onClick={() => handleAddToCart(product)}
+                    className={`w-full text-left p-3 hover:bg-muted ${
+                      highlightedIndex === index ? "bg-muted" : ""
+                    }`}
+                  >
+                    <p className="font-semibold">{product.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      LKR {product.retailPrice.toFixed(2)}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </main>
-    </div>
+          <DialogTrigger asChild>
+            <Button variant="ghost" className="h-11 px-3">
+              <UserPlus className="mr-2 h-4 w-4" />
+              {state.customer ? state.customer.name.split(" ")[0] : "Customer"}
+            </Button>
+          </DialogTrigger>
+        </header>
+
+        {/* MAIN AREA */}
+        <main className="flex-1 p-3 overflow-hidden">
+          <Card className="h-full flex flex-col">
+            <CardContent className="p-0 flex-1 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[55%]">Product</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead className="text-center">Qty</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {state.cart.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium py-2">
+                        {item.name}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        LKR {item.price.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-6 w-6"
+                            onClick={() =>
+                              dispatch({
+                                type: "UPDATE_QUANTITY",
+                                payload: {
+                                  id: item.id,
+                                  quantity: item.quantity - 1,
+                                },
+                              })
+                            }
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-6 text-center text-base font-semibold">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            className="h-6 w-6"
+                            onClick={() =>
+                              dispatch({
+                                type: "UPDATE_QUANTITY",
+                                payload: {
+                                  id: item.id,
+                                  quantity: item.quantity + 1,
+                                },
+                              })
+                            }
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-bold py-2">
+                        LKR {(item.price * item.quantity).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="py-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-red-500"
+                          onClick={() =>
+                            dispatch({ type: "REMOVE_ITEM", payload: item.id })
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {state.cart.length === 0 && (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  Scan or search to begin a new sale.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+
+        {/* FOOTER ACTION BAR */}
+        <footer className="grid grid-cols-12 gap-3 border-t bg-background p-3">
+          <div className="col-span-5 flex flex-col justify-center space-y-1">
+            <div className="flex justify-between text-md">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>LKR {subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-md">
+              <span className="text-muted-foreground">Tax</span>
+              <span>LKR {tax.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-xl font-bold text-primary">
+              <span>Total</span>
+              <span>LKR {total.toFixed(2)}</span>
+            </div>
+          </div>
+          <div className="col-span-7 grid grid-cols-3 gap-3">
+            <Button
+              variant="outline"
+              className="h-full flex-col gap-1 text-base"
+            >
+              <ListRestart className="h-5 w-5" />
+              Hold (F4)
+            </Button>
+            <Button
+              variant="destructive"
+              className="h-full flex-col gap-1 text-base"
+              onClick={() => dispatch({ type: "CLEAR_CART" })}
+            >
+              Cancel
+            </Button>
+            <div className="flex rounded-md border h-full">
+              <Button
+                variant={state.priceTier === "retail" ? "secondary" : "ghost"}
+                className="h-full flex-1 rounded-r-none"
+                onClick={() =>
+                  dispatch({ type: "SET_PRICE_TIER", payload: "retail" })
+                }
+              >
+                Retail
+              </Button>
+              <Button
+                variant={
+                  state.priceTier === "wholesale" ? "secondary" : "ghost"
+                }
+                className="h-full flex-1 rounded-l-none"
+                onClick={() =>
+                  dispatch({ type: "SET_PRICE_TIER", payload: "wholesale" })
+                }
+              >
+                Wholesale
+              </Button>
+            </div>
+            <Button className="h-full col-span-3 text-xl font-bold bg-green-600 hover:bg-green-700">
+              PAY (F2/F3)
+            </Button>
+          </div>
+        </footer>
+      </div>
+      <CustomerDialog
+        customers={customers}
+        onSelectCustomer={handleSelectCustomer}
+      />
+    </Dialog>
   );
 }
