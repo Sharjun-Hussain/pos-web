@@ -1,12 +1,19 @@
 // app/layout.jsx
 
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import Providers from "./providers";
 
+import { Ubuntu } from 'next/font/google'
 
-const inter = Inter({ subsets: ["latin"] });
+const ubuntu = Ubuntu({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  variable: '--font-ubuntu',
+})
+
+// const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "POS Application",
@@ -16,7 +23,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={ubuntu.variable}>
         <Providers>
         {children}
         <Toaster position="top-right" richColors /> {/* Add the Toaster here */}

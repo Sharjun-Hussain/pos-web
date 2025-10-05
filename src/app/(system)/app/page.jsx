@@ -25,10 +25,21 @@ import {
   ShoppingCart,
   DollarSign,
   List,
+  MonitorX,
+  Calculator,
+  Maximize,
+  Minimize,
+  Archive, // For Hold List / Sale List
+  PackageSearch, // For Check Stock
+  Printer, // For Reprint
+  ArrowLeftRight, // For Transfer
+  Undo, // For Return
+  Tag, // For Change Price
+  FlaskConical, // For Branch Item
+  ChevronDown,
 } from "lucide-react";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 
-// --- Mock Data (Unchanged) ---
+// --- Mock Data ---
 const MOCK_PRODUCTS = [
   {
     id: "1",
@@ -38,7 +49,7 @@ const MOCK_PRODUCTS = [
     retailPrice: 450.0,
     wholesalePrice: 400.0,
     imageUrl:
-      "https://images.unsplash.com/photo-1579992308814-569b01534026?q=80&w=2592&auto-format&fit=crop",
+      "https://images.unsplash.com/photo-1579992308814-569b01534026?q=80&w=2592&auto=format&fit=crop",
   },
   {
     id: "2",
@@ -48,7 +59,7 @@ const MOCK_PRODUCTS = [
     retailPrice: 600.0,
     wholesalePrice: 550.0,
     imageUrl:
-      "https://images.unsplash.com/photo-1563868013082-af329a4993a2?q=80&w=2592&auto-format&fit=crop",
+      "https://images.unsplash.com/photo-1563868013082-af329a4993a2?q=80&w=2592&auto=format&fit=crop",
   },
   {
     id: "3",
@@ -58,7 +69,7 @@ const MOCK_PRODUCTS = [
     retailPrice: 600.0,
     wholesalePrice: 550.0,
     imageUrl:
-      "https://images.unsplash.com/photo-1517701552125-7853223aa125?q=80&w=2538&auto-format&fit=crop",
+      "https://images.unsplash.com/photo-1517701552125-7853223aa125?q=80&w=2538&auto=format&fit=crop",
   },
   {
     id: "4",
@@ -68,7 +79,7 @@ const MOCK_PRODUCTS = [
     retailPrice: 550.0,
     wholesalePrice: 500.0,
     imageUrl:
-      "https://images.unsplash.com/photo-1587241321921-91a834d6d194?q=80&w=2700&auto-format&fit=crop",
+      "https://images.unsplash.com/photo-1587241321921-91a834d6d194?q=80&w=2700&auto=format&fit=crop",
   },
   {
     id: "5",
@@ -78,7 +89,7 @@ const MOCK_PRODUCTS = [
     retailPrice: 500.0,
     wholesalePrice: 450.0,
     imageUrl:
-      "https://images.unsplash.com/photo-1517701552125-7853223aa125?q=80&w=2538&auto-format&fit=crop",
+      "https://images.unsplash.com/photo-1517701552125-7853223aa125?q=80&w=2538&auto=format&fit=crop",
   },
   {
     id: "6",
@@ -88,7 +99,7 @@ const MOCK_PRODUCTS = [
     retailPrice: 650.0,
     wholesalePrice: 600.0,
     imageUrl:
-      "https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=2564&auto-format&fit=crop",
+      "https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=2564&auto=format&fit=crop",
   },
 ];
 const MOCK_CUSTOMERS = [
@@ -96,8 +107,13 @@ const MOCK_CUSTOMERS = [
   { id: "2", name: "Sunil Traders", phone: "0112345678" },
   { id: "3", name: "Kamala Silva", phone: "0718901234" },
 ];
+const MOCK_USERS = [
+  { id: "user1", name: "Kasun" },
+  { id: "user2", name: "Ayesha" },
+  { id: "user3", name: "Admin" },
+];
 
-// --- State Management (Unchanged) ---
+// --- State Management ---
 function appReducer(state, action) {
   switch (action.type) {
     case "ADD_ITEM": {
@@ -217,13 +233,51 @@ const CustomerSelector = ({
                   setSearchTerm("");
                 }}
               >
-                {" "}
                 <div className="text-left">
                   <p className="font-medium">{customer.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {customer.phone}
                   </p>
-                </div>{" "}
+                </div>
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+const UserSelector = ({ users, selectedUser, onSelectUser }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="relative w-full">
+      <Button
+        variant="outline"
+        className="h-12 w-full justify-between items-center text-left bg-white"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div>
+          <p className="text-xs text-slate-500">Sold By</p>
+          <p className="font-semibold text-slate-800">
+            {selectedUser ? selectedUser.name : "Select User"}
+          </p>
+        </div>
+        <ChevronDown className="h-4 w-4 text-slate-400" />
+      </Button>
+      {isOpen && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border rounded-lg shadow-xl z-10 p-2">
+          <div className="max-h-48 overflow-y-auto">
+            {users.map((user) => (
+              <Button
+                key={user.id}
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  onSelectUser(user);
+                  setIsOpen(false);
+                }}
+              >
+                {user.name}
               </Button>
             ))}
           </div>
@@ -237,11 +291,8 @@ const ProductCardWithImage = ({ product, onAddToCart }) => (
     onClick={() => onAddToCart(product)}
     className="cursor-pointer group border-slate-200/80 hover:border-blue-400/50 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 h-full flex flex-col overflow-hidden"
   >
-    {" "}
     <CardContent className="p-0 flex-1 flex flex-col">
-      {" "}
       <div className="overflow-hidden">
-        {" "}
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
@@ -252,15 +303,13 @@ const ProductCardWithImage = ({ product, onAddToCart }) => (
           <div className="h-32 flex items-center justify-center bg-slate-100 rounded-t-lg">
             <ImageIcon className="h-8 w-8 text-slate-400" />
           </div>
-        )}{" "}
-      </div>{" "}
+        )}
+      </div>
       <div className="p-3 flex-1 flex flex-col bg-white">
-        {" "}
         <div className="flex justify-between items-start mb-1">
-          {" "}
           <p className="font-semibold text-sm text-slate-800 flex-1">
             {product.name}
-          </p>{" "}
+          </p>
           {product.size && (
             <Badge
               variant="secondary"
@@ -268,19 +317,18 @@ const ProductCardWithImage = ({ product, onAddToCart }) => (
             >
               {product.size}
             </Badge>
-          )}{" "}
-        </div>{" "}
+          )}
+        </div>
         <div className="mt-auto pt-2">
-          {" "}
           <p className="text-blue-600 font-bold">
             LKR {product.retailPrice.toFixed(2)}
-          </p>{" "}
+          </p>
           <p className="text-xs text-slate-500">
             Wholesale: LKR {product.wholesalePrice.toFixed(2)}
-          </p>{" "}
-        </div>{" "}
-      </div>{" "}
-    </CardContent>{" "}
+          </p>
+        </div>
+      </div>
+    </CardContent>
   </Card>
 );
 const ProductCardSimple = ({ product, onAddToCart }) => (
@@ -288,32 +336,26 @@ const ProductCardSimple = ({ product, onAddToCart }) => (
     onClick={() => onAddToCart(product)}
     className="w-full text-left p-3 border border-slate-200/80 bg-white rounded-lg hover:border-blue-400 hover:bg-blue-50/50 transition-colors flex justify-between items-center group"
   >
-    {" "}
     <div>
-      {" "}
       <p className="font-semibold text-sm text-slate-800 group-hover:text-blue-800">
         {product.name}
-      </p>{" "}
-      <p className="text-xs text-slate-500">{product.size}</p>{" "}
-    </div>{" "}
+      </p>
+      <p className="text-xs text-slate-500">{product.size}</p>
+    </div>
     <div className="text-right">
-      {" "}
       <p className="font-bold text-sm text-blue-600">
         LKR {product.retailPrice.toFixed(2)}
-      </p>{" "}
+      </p>
       <p className="text-xs text-slate-500">
         WS: {product.wholesalePrice.toFixed(2)}
-      </p>{" "}
-    </div>{" "}
+      </p>
+    </div>
   </button>
 );
-
-// --- CartItemCard with UI & Workflow Fixes ---
 const CartItemCard = forwardRef(
   ({ item, dispatch, isSelected, onEnterPress }, ref) => {
     const discountAmount = item.price * item.quantity * (item.discount / 100);
     const netTotal = item.price * item.quantity - discountAmount;
-
     const handleQuantityChange = (newQuantity) => {
       const quantity = Math.max(0, newQuantity);
       if (quantity === 0) dispatch({ type: "REMOVE_ITEM", payload: item.id });
@@ -324,14 +366,12 @@ const CartItemCard = forwardRef(
       const discount = Math.max(0, Math.min(100, newDiscount));
       dispatch({ type: "UPDATE_ITEM", payload: { id: item.id, discount } });
     };
-    // FIX: Added KeyDown handler to listen for "Enter"
     const handleKeyDown = (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         onEnterPress();
       }
     };
-
     return (
       <div
         className={clsx(
@@ -343,14 +383,12 @@ const CartItemCard = forwardRef(
       >
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1">
-            {/* FIX: Increased product name size */}
             <p className="font-bold text-lg text-slate-800">{item.name}</p>
             <div className="flex items-center gap-x-2 text-xs text-slate-500 mt-1">
               <span>{item.barcode}</span>
               {item.size && (
                 <>
-                  <span>&bull;</span>
-                  <span>{item.size}</span>
+                  <span>&bull;</span> <span>{item.size}</span>
                 </>
               )}
             </div>
@@ -367,12 +405,10 @@ const CartItemCard = forwardRef(
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3 items-end">
           <div>
             <label className="text-xs text-slate-500 block">Price</label>
-            {/* FIX: Reduced price font size */}
             <p className="font-medium text-sm text-slate-700">
               LKR {item.price.toFixed(2)}
             </p>
           </div>
-          {/* FIX: Made quantity input flexible to prevent hiding on resize */}
           <div className="flex items-center gap-1.5 min-w-[110px]">
             <Button
               size="icon"
@@ -428,29 +464,196 @@ const CartItemCard = forwardRef(
   }
 );
 CartItemCard.displayName = "CartItemCard";
+const CalculatorModal = ({ onClose }) => {
+  const [displayValue, setDisplayValue] = useState("0");
+  const [operator, setOperator] = useState(null);
+  const [previousValue, setPreviousValue] = useState(null);
+  const [waitingForOperand, setWaitingForOperand] = useState(false);
+  const handleNumberClick = (num) => {
+    if (waitingForOperand) {
+      setDisplayValue(String(num));
+      setWaitingForOperand(false);
+    } else {
+      setDisplayValue(displayValue === "0" ? String(num) : displayValue + num);
+    }
+  };
+  const handleOperatorClick = (op) => {
+    const inputValue = parseFloat(displayValue);
+    if (previousValue === null) {
+      setPreviousValue(inputValue);
+    } else if (operator) {
+      const result = performCalculation();
+      setPreviousValue(result);
+      setDisplayValue(String(result));
+    }
+    setWaitingForOperand(true);
+    setOperator(op);
+  };
+  const performCalculation = () => {
+    const inputValue = parseFloat(displayValue);
+    if (operator === "+") return previousValue + inputValue;
+    if (operator === "-") return previousValue - inputValue;
+    if (operator === "*") return previousValue * inputValue;
+    if (operator === "/") return previousValue / inputValue;
+    return inputValue;
+  };
+  const handleEqualsClick = () => {
+    if (!operator) return;
+    const result = performCalculation();
+    setDisplayValue(String(result));
+    setPreviousValue(null);
+    setOperator(null);
+    setWaitingForOperand(false);
+  };
+  const handleClearClick = () => {
+    setDisplayValue("0");
+    setPreviousValue(null);
+    setOperator(null);
+    setWaitingForOperand(false);
+  };
+  const handleDecimalClick = () => {
+    if (!displayValue.includes(".")) setDisplayValue(displayValue + ".");
+  };
+  const calcButtons = [
+    "7",
+    "8",
+    "9",
+    "/",
+    "4",
+    "5",
+    "6",
+    "*",
+    "1",
+    "2",
+    "3",
+    "-",
+    "0",
+    ".",
+    "=",
+    "+",
+  ];
+  const handleButtonClick = (btn) => {
+    if (!isNaN(parseInt(btn))) handleNumberClick(btn);
+    else if (["/", "*", "-", "+"].includes(btn)) handleOperatorClick(btn);
+    else if (btn === "=") handleEqualsClick();
+    else if (btn === ".") handleDecimalClick();
+  };
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-xl shadow-2xl w-80"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b flex justify-between items-center">
+          <h3 className="font-bold text-slate-800">Calculator</h3>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="p-4">
+          <div className="bg-slate-100 text-right text-4xl font-mono p-4 rounded-lg mb-4 break-all">
+            {displayValue}
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            <Button
+              onClick={handleClearClick}
+              className="col-span-4 h-14 text-xl bg-amber-500 hover:bg-amber-600"
+            >
+              C
+            </Button>
+            {calcButtons.map((btn) => (
+              <Button
+                key={btn}
+                onClick={() => handleButtonClick(btn)}
+                variant={
+                  isNaN(parseInt(btn)) && btn !== "." ? "secondary" : "outline"
+                }
+                className="h-14 text-xl"
+              >
+                {btn}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+const ReprintModal = ({ onClose }) => (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    onClick={onClose}
+  >
+    <div
+      className="bg-white rounded-xl shadow-2xl w-full max-w-md"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="p-4 border-b flex justify-between items-center">
+        <h3 className="font-bold text-slate-800">Reprint Invoice</h3>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="p-6 text-center">
+        <p className="text-slate-600">
+          A list of recent invoices and held sales would appear here.
+        </p>
+      </div>
+    </div>
+  </div>
+);
 
 // --- Main POS Page Component ---
 export default function PosPage() {
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [users, setUsers] = useState([]);
   const [productSearch, setProductSearch] = useState("");
   const [editMode, setEditMode] = useState("search");
   const [selectedCartIndex, setSelectedCartIndex] = useState(0);
   const [showProductImages, setShowProductImages] = useState(true);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isReprintModalOpen, setIsReprintModalOpen] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [adjustment, setAdjustment] = useState(0);
+  const [cashIn, setCashIn] = useState(0);
+  const [soldBy, setSoldBy] = useState(null);
   const searchInputRef = useRef(null);
   const cartItemRefs = useRef(new Map());
   const initialState = { cart: [], customer: null, priceTier: "retail" };
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   useEffect(() => {
+    const timer = setInterval(() => setCurrentDateTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     setProducts(MOCK_PRODUCTS);
     setCustomers(MOCK_CUSTOMERS);
+    setUsers(MOCK_USERS);
+    setSoldBy(MOCK_USERS[0]);
     searchInputRef.current?.focus();
   }, []);
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(productSearch.toLowerCase())
   );
+
   const totals = state.cart.reduce(
     (acc, item) => {
       const grossTotal = item.price * item.quantity;
@@ -462,16 +665,16 @@ export default function PosPage() {
     { subtotal: 0, totalDiscount: 0 }
   );
   const tax = (totals.subtotal - totals.totalDiscount) * 0.08;
-  const total = totals.subtotal - totals.totalDiscount + tax;
+  const grandTotal = totals.subtotal - totals.totalDiscount + tax;
+  const netTotal = grandTotal + adjustment;
+  const balance = cashIn > 0 ? cashIn - netTotal : 0;
 
-  // FIX: Removed focus from handleAddToCart to allow useEffect to manage it
   const handleAddToCart = (product) => {
     dispatch({
       type: "ADD_ITEM",
       payload: { product, priceTier: state.priceTier },
     });
     setProductSearch("");
-    // searchInputRef.current?.focus(); // <-- THIS LINE WAS REMOVED
   };
 
   const handleSelectCustomer = (customer) => {
@@ -479,23 +682,35 @@ export default function PosPage() {
   };
   const resetSale = () => {
     dispatch({ type: "CLEAR_CART" });
+    setAdjustment(0);
+    setCashIn(0);
     searchInputRef.current?.focus();
     setEditMode("search");
   };
-
-  // FIX: This function now correctly returns focus to the search bar
   const focusOnSearch = () => {
     setEditMode("search");
     searchInputRef.current?.focus();
     searchInputRef.current?.select();
   };
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  };
 
-  // FIX: This effect now correctly focuses on the new item's quantity input
+  useEffect(() => {
+    const handleFullScreenChange = () =>
+      setIsFullScreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleFullScreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullScreenChange);
+  }, []);
   useEffect(() => {
     if (state.cart.length > 0) {
       const lastItem = state.cart[state.cart.length - 1];
       const lastItemRef = cartItemRefs.current.get(lastItem.id);
-      // Only shift focus if the search bar isn't the active element (e.g., after a click)
       if (lastItemRef && document.activeElement !== searchInputRef.current) {
         lastItemRef.focus();
         lastItemRef.select();
@@ -503,9 +718,7 @@ export default function PosPage() {
         setSelectedCartIndex(state.cart.length - 1);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.cart.length]);
-
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.key === "q" || e.key === "Q") && (e.ctrlKey || !e.metaKey)) {
@@ -514,7 +727,9 @@ export default function PosPage() {
       }
       if (e.key === "Escape") {
         e.preventDefault();
-        if (state.cart.length > 0) {
+        if (isCalculatorOpen) setIsCalculatorOpen(false);
+        else if (isReprintModalOpen) setIsReprintModalOpen(false);
+        else if (state.cart.length > 0) {
           setEditMode("cart");
           setSelectedCartIndex(0);
           cartItemRefs.current.get(state.cart[0].id)?.focus();
@@ -540,28 +755,78 @@ export default function PosPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editMode, selectedCartIndex, state.cart, focusOnSearch]);
+  }, [
+    editMode,
+    selectedCartIndex,
+    state.cart,
+    focusOnSearch,
+    isCalculatorOpen,
+    isReprintModalOpen,
+  ]);
+
+  const utilityActions = [
+    {
+      label: "Hold Sale",
+      icon: ListRestart,
+      action: () => alert("Sale Held (placeholder)"),
+    },
+    {
+      label: "Sale List",
+      icon: Archive,
+      action: () => alert("Show Hold List (placeholder)"),
+    },
+    {
+      label: "Check Stock",
+      icon: PackageSearch,
+      action: () => alert("Navigate to Stock Page (placeholder)"),
+    },
+    {
+      label: "Reprint",
+      icon: Printer,
+      action: () => setIsReprintModalOpen(true),
+    },
+    {
+      label: "Return",
+      icon: Undo,
+      action: () => alert("Open Return Interface (placeholder)"),
+    },
+    {
+      label: "Branch Item",
+      icon: FlaskConical,
+      action: () => alert("Branch Item Action (placeholder)"),
+    },
+    {
+      label: "Transfer",
+      icon: ArrowLeftRight,
+      action: () => {},
+      disabled: true,
+    },
+    { label: "Change Price", icon: Tag, action: () => {}, disabled: true },
+  ];
 
   return (
-    <div className="flex h-screen flex-col bg-slate-50 font-sans">
-      <header className="flex items-center justify-between border-b bg-white p-4 lg:hidden shadow-sm">
-        <h1 className="text-xl font-bold text-slate-800">POS System</h1>
-        <Badge
-          variant="secondary"
-          className="px-2 py-1 bg-blue-100 text-blue-800 border-blue-200"
-        >
-          <ShoppingCart className="h-3 w-3 mr-1.5" />
-          {state.cart.length}
-        </Badge>
-      </header>
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <ResizablePanelGroup direction="horizontal" className="flex-1 lg:flex">
-          <ResizablePanel defaultSize={35} minSize={30}>
-            <aside className="flex flex-col h-full border-r border-slate-200/60 bg-white">
-              <header className="p-4 border-b border-slate-200/60">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-3 ">
-                    <SidebarTrigger />
+    <>
+      <div className="flex h-screen flex-col items-center justify-center bg-slate-100 p-4 text-center lg:hidden">
+        <MonitorX className="h-16 w-16 text-slate-400" />
+        <h1 className="mt-6 text-2xl font-bold text-slate-800">
+          Optimal Experience on Larger Screens
+        </h1>
+        <p className="mt-2 max-w-sm text-slate-600">
+          This POS system is designed for tablets and desktops. Please switch to
+          a larger device to continue.
+        </p>
+      </div>
+
+      <div className="hidden h-screen flex-col bg-slate-50 font-sans lg:flex">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          <ResizablePanelGroup
+            direction="horizontal"
+            className="flex-1 lg:flex"
+          >
+            <ResizablePanel defaultSize={35} minSize={30}>
+              <aside className="flex flex-col h-full border-r border-slate-200/60 bg-white">
+                <header className="p-4 border-b border-slate-200/60">
+                  <div className="space-y-3">
                     <div className="relative w-full">
                       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                       <Input
@@ -573,214 +838,308 @@ export default function PosPage() {
                         onFocus={() => setEditMode("search")}
                       />
                     </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
-                    <CustomerSelector
-                      customers={customers}
-                      selectedCustomer={state.customer}
-                      onSelectCustomer={handleSelectCustomer}
-                    />
-                    <Button
-                      variant="outline"
-                      className="h-11 bg-white"
-                      onClick={() => setShowProductImages(!showProductImages)}
-                      title={
-                        showProductImages
-                          ? "Switch to list view"
-                          : "Switch to grid view"
-                      }
-                    >
-                      {showProductImages ? (
-                        <List className="h-5 w-5" />
-                      ) : (
-                        <ImageIcon className="h-5 w-5" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </header>
-              <div className="flex-1 p-4 overflow-y-auto bg-slate-50/50">
-                {showProductImages ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {filteredProducts.map((p) => (
-                      <ProductCardWithImage
-                        key={p.id}
-                        product={p}
-                        onAddToCart={handleAddToCart}
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
+                      <CustomerSelector
+                        customers={customers}
+                        selectedCustomer={state.customer}
+                        onSelectCustomer={handleSelectCustomer}
                       />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {filteredProducts.map((p) => (
-                      <ProductCardSimple
-                        key={p.id}
-                        product={p}
-                        onAddToCart={handleAddToCart}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </aside>
-          </ResizablePanel>
-          <ResizableHandle withHandle className="bg-slate-100 hidden lg:flex" />
-          <ResizablePanel defaultSize={65} minSize={40}>
-            <main className="flex flex-col h-full">
-              <header className="p-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <ShoppingCart className="h-6 w-6 text-blue-600" />
-                    <h2 className="text-xl font-bold text-slate-800">
-                      Current Sale
-                    </h2>
-                    {state.cart.length > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="px-2.5 py-1 text-sm bg-blue-100 text-blue-800 border-blue-200"
-                      >
-                        {state.cart.length} items
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="hidden md:flex rounded-lg border bg-slate-100 p-0.5">
                       <Button
-                        variant={
-                          state.priceTier === "retail" ? "secondary" : "ghost"
-                        }
-                        className="h-8 rounded-md text-sm shadow-sm bg-white data-[state=active]:bg-white"
-                        onClick={() =>
-                          dispatch({
-                            type: "SET_PRICE_TIER",
-                            payload: "retail",
-                          })
+                        variant="outline"
+                        className="h-11 bg-white"
+                        onClick={() => setShowProductImages(!showProductImages)}
+                        title={
+                          showProductImages
+                            ? "Switch to list view"
+                            : "Switch to grid view"
                         }
                       >
-                        Retail
-                      </Button>
-                      <Button
-                        variant={
-                          state.priceTier === "wholesale"
-                            ? "secondary"
-                            : "ghost"
-                        }
-                        className="h-8 rounded-md text-sm data-[state=active]:bg-white"
-                        onClick={() =>
-                          dispatch({
-                            type: "SET_PRICE_TIER",
-                            payload: "wholesale",
-                          })
-                        }
-                      >
-                        Wholesale
+                        {showProductImages ? (
+                          <List className="h-5 w-5" />
+                        ) : (
+                          <ImageIcon className="h-5 w-5" />
+                        )}
                       </Button>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9 text-red-600 hover:text-red-700 hover:bg-red-50/80 border-red-200/80 bg-white"
-                      onClick={resetSale}
-                    >
-                      <X className="h-4 w-4 mr-1.5" />
-                      Clear
-                    </Button>
                   </div>
+                </header>
+                <div className="flex-1 p-4 overflow-y-auto bg-slate-50/50">
+                  {showProductImages ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {filteredProducts.map((p) => (
+                        <ProductCardWithImage
+                          key={p.id}
+                          product={p}
+                          onAddToCart={handleAddToCart}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {filteredProducts.map((p) => (
+                        <ProductCardSimple
+                          key={p.id}
+                          product={p}
+                          onAddToCart={handleAddToCart}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </header>
-              <div className="flex-1 p-4 overflow-y-auto bg-slate-100/60">
-                {state.cart.length > 0 ? (
-                  <div className="space-y-4 max-w-5xl mx-auto">
-                    {state.cart.map((item, index) => (
-                      <CartItemCard
-                        key={item.id}
-                        item={item}
-                        dispatch={dispatch}
-                        isSelected={
-                          editMode === "cart" && selectedCartIndex === index
-                        }
-                        onEnterPress={focusOnSearch}
-                        ref={(el) => {
-                          if (el) cartItemRefs.current.set(item.id, el);
-                          else cartItemRefs.current.delete(item.id);
-                        }}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-slate-500">
-                    <ShoppingCart className="h-20 w-20 mb-4 opacity-10" />
-                    <p className="text-lg font-medium mb-2">
-                      Your cart is empty
-                    </p>
-                    <p className="text-sm text-center">
-                      Add products from the left panel to begin a sale.
-                    </p>
-                  </div>
-                )}
-              </div>
-              <footer className="border-t border-slate-200/60 bg-white/80 backdrop-blur-sm p-4 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.02)]">
-                {state.cart.length > 0 && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-7xl mx-auto items-center">
-                    {" "}
-                    <div className="lg:col-span-5 space-y-2.5 bg-slate-50/80 p-4 rounded-xl border border-slate-200/80">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Subtotal</span>
-                        <span className="font-medium text-slate-800">
-                          LKR {totals.subtotal.toFixed(2)}
-                        </span>
+              </aside>
+            </ResizablePanel>
+            <ResizableHandle
+              withHandle
+              className="bg-slate-100 hidden lg:flex"
+            />
+            <ResizablePanel defaultSize={65} minSize={40}>
+              <main className="flex flex-col h-full">
+                <header className="p-4 border-b border-slate-200/60 bg-white/80 backdrop-blur-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <ShoppingCart className="h-6 w-6 text-blue-600" />
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-800">
+                          Current Sale
+                        </h2>
+                        <p className="text-xs text-slate-500 -mt-0.5">
+                          {currentDateTime.toLocaleString()}
+                        </p>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Discount</span>
-                        <span className="font-medium text-red-600">
-                          - LKR {totals.totalDiscount.toFixed(2)}
-                        </span>
+                      {state.cart.length > 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="px-2.5 py-1 text-sm bg-blue-100 text-blue-800 border-blue-200"
+                        >
+                          {state.cart.length} items
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="hidden md:flex rounded-lg border bg-slate-100 p-0.5">
+                        <Button
+                          variant={
+                            state.priceTier === "retail" ? "secondary" : "ghost"
+                          }
+                          className="h-8 rounded-md text-sm shadow-sm bg-white data-[state=active]:bg-white"
+                          onClick={() =>
+                            dispatch({
+                              type: "SET_PRICE_TIER",
+                              payload: "retail",
+                            })
+                          }
+                        >
+                          Retail
+                        </Button>
+                        <Button
+                          variant={
+                            state.priceTier === "wholesale"
+                              ? "secondary"
+                              : "ghost"
+                          }
+                          className="h-8 rounded-md text-sm data-[state=active]:bg-white"
+                          onClick={() =>
+                            dispatch({
+                              type: "SET_PRICE_TIER",
+                              payload: "wholesale",
+                            })
+                          }
+                        >
+                          Wholesale
+                        </Button>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Tax (8%)</span>
-                        <span className="font-medium text-slate-800">
-                          LKR {tax.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-xl font-bold text-blue-700 pt-3 border-t border-slate-200 mt-3">
-                        <span className="text-slate-900">Total</span>
-                        <span>LKR {total.toFixed(2)}</span>
-                      </div>
-                    </div>{" "}
-                    <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-4 gap-3">
                       <Button
                         variant="outline"
-                        className="h-16 flex-col gap-1 text-xs bg-white"
+                        size="icon"
+                        className="h-9 w-9 bg-white"
+                        onClick={() => setIsCalculatorOpen(true)}
                       >
-                        <ListRestart className="h-5 w-5 text-amber-600" />
-                        Hold Sale
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="h-16 flex-col gap-1 text-xs bg-white"
-                      >
-                        <CreditCard className="h-5 w-5 text-indigo-600" />
-                        Pay by Card
+                        <Calculator className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
-                        className="h-16 flex-col gap-1 text-xs bg-white"
+                        size="icon"
+                        className="h-9 w-9 bg-white"
+                        onClick={toggleFullScreen}
                       >
-                        <Wallet className="h-5 w-5 text-emerald-600" />
-                        Pay by Cash
+                        {isFullScreen ? (
+                          <Minimize className="h-4 w-4" />
+                        ) : (
+                          <Maximize className="h-4 w-4" />
+                        )}
                       </Button>
-                      <Button className="h-16 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all flex-col gap-1 col-span-2 md:col-span-1">
-                        <DollarSign className="h-6 w-6" />
-                        PAY
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 text-red-600 hover:text-red-700 hover:bg-red-50/80 border-red-200/80 bg-white"
+                        onClick={resetSale}
+                      >
+                        <X className="h-4 w-4 mr-1.5" /> Clear
                       </Button>
-                    </div>{" "}
+                    </div>
                   </div>
-                )}
-              </footer>
-            </main>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+                </header>
+                <div className="flex-1 p-4 overflow-y-auto bg-slate-100/60">
+                  {state.cart.length > 0 ? (
+                    <div className="space-y-4 max-w-5xl mx-auto">
+                      {state.cart.map((item, index) => (
+                        <CartItemCard
+                          key={item.id}
+                          item={item}
+                          dispatch={dispatch}
+                          isSelected={
+                            editMode === "cart" && selectedCartIndex === index
+                          }
+                          onEnterPress={focusOnSearch}
+                          ref={(el) => {
+                            if (el) cartItemRefs.current.set(item.id, el);
+                            else cartItemRefs.current.delete(item.id);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                      <ShoppingCart className="h-20 w-20 mb-4 opacity-10" />
+                      <p className="text-lg font-medium mb-2">
+                        Your cart is empty
+                      </p>
+                      <p className="text-sm text-center">
+                        Add products from the left panel to begin a sale.
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {/* --- FOOTER MODIFIED --- */}
+                <footer className="border-t border-slate-200/60 bg-white/80 backdrop-blur-sm p-4 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.02)]">
+                  {state.cart.length > 0 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-7xl mx-auto items-start">
+                      <div className="lg:col-span-5 space-y-2.5 bg-slate-50/80 p-4 rounded-xl border border-slate-200/80">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-600">Subtotal</span>
+                          <span className="font-medium text-slate-800">
+                            LKR {totals.subtotal.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-600">Discount</span>
+                          <span className="font-medium text-red-600">
+                            - LKR {totals.totalDiscount.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-slate-600">Tax (8%)</span>
+                          <span className="font-medium text-slate-800">
+                            LKR {tax.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-base font-semibold pt-2 border-t mt-2">
+                          <span className="text-slate-800">Grand Total</span>
+                          <span className="text-slate-900">
+                            LKR {grandTotal.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-slate-600">Adjustment</span>
+                          <Input
+                            type="number"
+                            className="h-8 max-w-[120px] text-right bg-white"
+                            value={adjustment}
+                            onChange={(e) =>
+                              setAdjustment(parseFloat(e.target.value) || 0)
+                            }
+                          />
+                        </div>
+                        <div className="flex justify-between text-2xl font-bold text-blue-700 pt-3 border-t border-slate-200 mt-3">
+                          <span className="text-slate-900">Net Total</span>
+                          <span>LKR {netTotal.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <div className="lg:col-span-7 flex flex-col gap-3">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <div className="col-span-2 md:col-span-4 p-4 rounded-xl border border-slate-200/80 bg-slate-50/80 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium text-slate-700 block mb-1.5">
+                                Cash In
+                              </label>
+                              <Input
+                                type="number"
+                                placeholder="0.00"
+                                className="h-12 text-lg font-semibold bg-white"
+                                value={cashIn || ""}
+                                onChange={(e) =>
+                                  setCashIn(parseFloat(e.target.value) || 0)
+                                }
+                              />
+                            </div>
+                            <div className="text-right">
+                              <label className="text-sm font-medium text-slate-700 block mb-1.5">
+                                Balance
+                              </label>
+                              <div className="h-12 flex items-center justify-end rounded-lg bg-emerald-100 text-emerald-700 font-bold text-3xl px-4">
+                                {balance.toFixed(2)}
+                              </div>
+                            </div>
+                          </div>
+
+                          <UserSelector
+                            users={users}
+                            selectedUser={soldBy}
+                            onSelectUser={setSoldBy}
+                          />
+
+                          <Button
+                            variant="outline"
+                            className="h-16 flex-col gap-1 text-xs bg-white"
+                          >
+                            <CreditCard className="h-5 w-5 text-indigo-600" />{" "}
+                            Pay by Card
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="h-16 flex-col gap-1 text-xs bg-white"
+                          >
+                            <Wallet className="h-5 w-5 text-emerald-600" /> Pay
+                            by Cash
+                          </Button>
+                          <Button className="h-16 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all flex-col gap-1">
+                            <DollarSign className="h-6 w-6" /> PAY
+                          </Button>
+                        </div>
+
+                        {/* --- NEW BUTTONS SECTION --- */}
+                        <div className="grid grid-cols-4 lg:grid-cols-8 gap-2">
+                          {utilityActions.map((action) => (
+                            <Button
+                              key={action.label}
+                              variant="outline"
+                              className="h-16 flex-col gap-1.5 text-xs bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                              onClick={action.action}
+                              disabled={action.disabled}
+                            >
+                              <action.icon className="h-5 w-5" />
+                              <span className="text-center leading-tight">
+                                {action.label}
+                              </span>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </footer>
+              </main>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </div>
+        {isCalculatorOpen && (
+          <CalculatorModal onClose={() => setIsCalculatorOpen(false)} />
+        )}
+        {isReprintModalOpen && (
+          <ReprintModal onClose={() => setIsReprintModalOpen(false)} />
+        )}
       </div>
-    </div>
+    </>
   );
 }
