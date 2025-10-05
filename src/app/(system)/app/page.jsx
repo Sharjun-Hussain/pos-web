@@ -26,6 +26,7 @@ import {
   DollarSign,
   List,
 } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 // --- Mock Data (Unchanged) ---
 const MOCK_PRODUCTS = [
@@ -559,16 +560,19 @@ export default function PosPage() {
             <aside className="flex flex-col h-full border-r border-slate-200/60 bg-white">
               <header className="p-4 border-b border-slate-200/60">
                 <div className="space-y-3">
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                    <Input
-                      ref={searchInputRef}
-                      placeholder="Search products... (Ctrl+Q)"
-                      className="pl-11 h-12 text-base bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
-                      value={productSearch}
-                      onChange={(e) => setProductSearch(e.target.value)}
-                      onFocus={() => setEditMode("search")}
-                    />
+                  <div className="flex items-center justify-between gap-3 ">
+                    <SidebarTrigger />
+                    <div className="relative w-full">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                      <Input
+                        ref={searchInputRef}
+                        placeholder="Search products... (Ctrl+Q)"
+                        className="pl-11 h-12 text-base bg-white border-slate-300 focus:border-blue-500 focus:ring-blue-500"
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        onFocus={() => setEditMode("search")}
+                      />
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2">
                     <CustomerSelector
