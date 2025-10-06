@@ -34,7 +34,7 @@ import {
   Printer, // For Reprint
   ArrowLeftRight, // For Transfer
   Undo, // For Return
-  Tag, // For Change Price
+  Tag, // For Change Price & Voucher
   FlaskConical, // For Branch Item
   ChevronDown,
 } from "lucide-react";
@@ -117,9 +117,10 @@ const MOCK_USERS = [
 function appReducer(state, action) {
   switch (action.type) {
     case "ADD_ITEM": {
-      const { product, priceTier } = action.payload;
-      const price =
-        priceTier === "retail" ? product.retailPrice : product.wholesalePrice;
+      const { product } = action.payload;
+      const price = state.isWholesale
+        ? product.wholesalePrice
+        : product.retailPrice;
       const existingItemIndex = state.cart.findIndex(
         (item) => item.id === product.id
       );
@@ -158,24 +159,24 @@ function appReducer(state, action) {
       };
     case "SET_CUSTOMER":
       return { ...state, customer: action.payload };
-    case "SET_PRICE_TIER": {
+    case "TOGGLE_WHOLESALE": {
+      const { isWholesale } = action.payload;
+      const updatedCart = state.cart.map((item) => {
+        const product = MOCK_PRODUCTS.find((p) => p.id === item.id);
+        if (!product) return item;
+        return {
+          ...item,
+          price: isWholesale ? product.wholesalePrice : product.retailPrice,
+        };
+      });
       return {
         ...state,
-        priceTier: action.payload,
-        cart: state.cart.map((item) => {
-          const product = MOCK_PRODUCTS.find((p) => p.id === item.id);
-          return {
-            ...item,
-            price:
-              action.payload === "retail"
-                ? product.retailPrice
-                : product.wholesalePrice,
-          };
-        }),
+        isWholesale,
+        cart: updatedCart,
       };
     }
     case "CLEAR_CART":
-      return { ...state, customer: null, cart: [] };
+      return { ...state, customer: null, cart: [], isWholesale: false };
     default:
       return state;
   }
@@ -253,7 +254,7 @@ const UserSelector = ({ users, selectedUser, onSelectUser }) => {
     <div className="relative w-full">
       <Button
         variant="outline"
-        className="h-12 w-full justify-between items-center text-left bg-white"
+        className="h-16 w-full justify-between items-center text-left bg-white"
         onClick={() => setIsOpen(!isOpen)}
       >
         <div>
@@ -323,9 +324,6 @@ const ProductCardWithImage = ({ product, onAddToCart }) => (
           <p className="text-blue-600 font-bold">
             LKR {product.retailPrice.toFixed(2)}
           </p>
-          <p className="text-xs text-slate-500">
-            Wholesale: LKR {product.wholesalePrice.toFixed(2)}
-          </p>
         </div>
       </div>
     </CardContent>
@@ -346,16 +344,12 @@ const ProductCardSimple = ({ product, onAddToCart }) => (
       <p className="font-bold text-sm text-blue-600">
         LKR {product.retailPrice.toFixed(2)}
       </p>
-      <p className="text-xs text-slate-500">
-        WS: {product.wholesalePrice.toFixed(2)}
-      </p>
     </div>
   </button>
 );
 const CartItemCard = forwardRef(
   ({ item, dispatch, isSelected, onEnterPress }, ref) => {
-    const discountAmount = item.price * item.quantity * (item.discount / 100);
-    const netTotal = item.price * item.quantity - discountAmount;
+    const netTotal = item.price * item.quantity * (1 - item.discount / 100);
     const handleQuantityChange = (newQuantity) => {
       const quantity = Math.max(0, newQuantity);
       if (quantity === 0) dispatch({ type: "REMOVE_ITEM", payload: item.id });
@@ -375,89 +369,92 @@ const CartItemCard = forwardRef(
     return (
       <div
         className={clsx(
-          "p-4 rounded-xl border-2 transition-all duration-200",
+          "group flex items-center gap-x-4 p-2 rounded-lg border-2 transition-all duration-200",
           isSelected
-            ? "bg-blue-50 border-blue-500 shadow-lg"
+            ? "bg-blue-50 border-blue-500 shadow-md"
             : "bg-white border-transparent hover:border-slate-200"
         )}
       >
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
-            <p className="font-bold text-lg text-slate-800">{item.name}</p>
-            <div className="flex items-center gap-x-2 text-xs text-slate-500 mt-1">
-              <span>{item.barcode}</span>
-              {item.size && (
-                <>
-                  <span>&bull;</span> <span>{item.size}</span>
-                </>
-              )}
-            </div>
-          </div>
+        {/* Product Info */}
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-slate-800 truncate">{item.name}</p>
+          <p className="text-xs text-slate-500">
+            {item.barcode} {item.size && `• ${item.size}`}
+          </p>
+        </div>
+
+        {/* Price */}
+        <div className="w-24 shrink-0 text-right">
+          <label className="text-xs text-slate-500 block">Price</label>
+          <p className="font-medium text-sm text-slate-700">
+            {item.price.toFixed(2)}
+          </p>
+        </div>
+
+        {/* Quantity */}
+        <div className="flex shrink-0 items-center gap-1.5 w-[120px]">
           <Button
             size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-red-500/80 hover:text-red-600 hover:bg-red-100 shrink-0 -mt-1 -mr-1"
-            onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
+            variant="outline"
+            className="h-8 w-8 bg-white flex-shrink-0"
+            onClick={() => handleQuantityChange(item.quantity - 1)}
           >
-            <Trash2 className="h-4 w-4" />
+            <Minus className="h-4 w-4" />
+          </Button>
+          <Input
+            ref={ref}
+            onKeyDown={handleKeyDown}
+            type="number"
+            value={item.quantity}
+            onChange={(e) => handleQuantityChange(Number(e.target.value))}
+            className="h-8 w-full min-w-0 text-center text-base font-semibold p-0 bg-white"
+          />
+          <Button
+            size="icon"
+            variant="outline"
+            className="h-8 w-8 bg-white flex-shrink-0"
+            onClick={() => handleQuantityChange(item.quantity + 1)}
+          >
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3 items-end">
-          <div>
-            <label className="text-xs text-slate-500 block">Price</label>
-            <p className="font-medium text-sm text-slate-700">
-              LKR {item.price.toFixed(2)}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5 min-w-[110px]">
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 bg-white flex-shrink-0"
-              onClick={() => handleQuantityChange(item.quantity - 1)}
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <Input
-              ref={ref}
-              onKeyDown={handleKeyDown}
-              type="number"
-              value={item.quantity}
-              onChange={(e) => handleQuantityChange(Number(e.target.value))}
-              className="h-8 w-full min-w-0 text-center text-base font-semibold p-0 bg-white"
-            />
-            <Button
-              size="icon"
-              variant="outline"
-              className="h-8 w-8 bg-white flex-shrink-0"
-              onClick={() => handleQuantityChange(item.quantity + 1)}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-          <div>
-            <label className="text-xs text-slate-500 block">Discount %</label>
+
+        {/* Discount */}
+        <div className="w-24 shrink-0">
+          <label className="text-xs text-slate-500 block text-center">
+            Discount
+          </label>
+          <div className="relative">
             <Input
               type="number"
               value={item.discount}
               onChange={(e) => handleDiscountChange(Number(e.target.value))}
-              className="h-8 w-full md:w-20 text-center text-sm p-1 bg-white"
+              className="h-8 w-full text-center text-sm p-1 bg-white pr-5"
             />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 pointer-events-none">
+              %
+            </span>
           </div>
-          <div className="hidden lg:block">
-            <label className="text-xs text-slate-500 block">
-              Discount Amt.
-            </label>
-            <p className="font-medium text-red-600">
-              - LKR {discountAmount.toFixed(2)}
-            </p>
-          </div>
-          <div className="col-span-2 md:col-span-1 lg:col-span-2 text-right">
-            <label className="text-xs text-slate-500 block">Amount</label>
-            <p className="font-bold text-2xl text-blue-700">
-              LKR {netTotal.toFixed(2)}
-            </p>
-          </div>
+        </div>
+
+        {/* Amount */}
+        <div className="w-32 shrink-0 text-right">
+          <label className="text-xs text-slate-500 block">Amount</label>
+          <p className="font-bold text-lg text-blue-700">
+            {netTotal.toFixed(2)}
+          </p>
+        </div>
+
+        {/* Delete Button */}
+        <div className="w-8 shrink-0">
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 text-red-500/70 hover:text-red-600 hover:bg-red-100 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+            onClick={() => dispatch({ type: "REMOVE_ITEM", payload: item.id })}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     );
@@ -632,9 +629,11 @@ export default function PosPage() {
   const [adjustment, setAdjustment] = useState(0);
   const [cashIn, setCashIn] = useState(0);
   const [soldBy, setSoldBy] = useState(null);
+  const [wholesaleDiscount, setWholesaleDiscount] = useState(0);
+
   const searchInputRef = useRef(null);
   const cartItemRefs = useRef(new Map());
-  const initialState = { cart: [], customer: null, priceTier: "retail" };
+  const initialState = { cart: [], customer: null, isWholesale: false };
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   useEffect(() => {
@@ -657,23 +656,45 @@ export default function PosPage() {
   const totals = state.cart.reduce(
     (acc, item) => {
       const grossTotal = item.price * item.quantity;
-      const discountAmount = grossTotal * (item.discount / 100);
+      const itemDiscountAmount = grossTotal * (item.discount / 100);
       acc.subtotal += grossTotal;
-      acc.totalDiscount += discountAmount;
+      acc.totalItemDiscount += itemDiscountAmount;
       return acc;
     },
-    { subtotal: 0, totalDiscount: 0 }
+    { subtotal: 0, totalItemDiscount: 0 }
   );
-  const tax = (totals.subtotal - totals.totalDiscount) * 0.08;
-  const grandTotal = totals.subtotal - totals.totalDiscount + tax;
+
+  const wholesaleDiscountAmount = state.isWholesale
+    ? totals.subtotal * (wholesaleDiscount / 100)
+    : 0;
+  const totalDiscount = totals.totalItemDiscount + wholesaleDiscountAmount;
+  const subtotalAfterDiscounts = totals.subtotal - totalDiscount;
+  const tax = subtotalAfterDiscounts * 0.08;
+  const grandTotal = subtotalAfterDiscounts + tax;
   const netTotal = grandTotal + adjustment;
   const balance = cashIn > 0 ? cashIn - netTotal : 0;
 
   const handleAddToCart = (product) => {
-    dispatch({
-      type: "ADD_ITEM",
-      payload: { product, priceTier: state.priceTier },
-    });
+    const existingItemIndex = state.cart.findIndex(
+      (item) => item.id === product.id
+    );
+
+    if (existingItemIndex > -1) {
+      // If item exists, focus it in the cart
+      setSelectedCartIndex(existingItemIndex);
+      const existingItem = state.cart[existingItemIndex];
+      const itemRef = cartItemRefs.current.get(existingItem.id);
+      if (itemRef) {
+        itemRef.focus();
+        itemRef.select();
+        itemRef
+          .closest(".group")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      setEditMode("cart");
+    }
+
+    dispatch({ type: "ADD_ITEM", payload: { product } });
     setProductSearch("");
   };
 
@@ -684,6 +705,7 @@ export default function PosPage() {
     dispatch({ type: "CLEAR_CART" });
     setAdjustment(0);
     setCashIn(0);
+    setWholesaleDiscount(0);
     searchInputRef.current?.focus();
     setEditMode("search");
   };
@@ -700,6 +722,17 @@ export default function PosPage() {
     }
   };
 
+  const handleWholesaleToggle = () => {
+    const nextIsWholesale = !state.isWholesale;
+    dispatch({
+      type: "TOGGLE_WHOLESALE",
+      payload: { isWholesale: nextIsWholesale },
+    });
+    if (!nextIsWholesale) {
+      setWholesaleDiscount(0);
+    }
+  };
+
   useEffect(() => {
     const handleFullScreenChange = () =>
       setIsFullScreen(!!document.fullscreenElement);
@@ -708,6 +741,7 @@ export default function PosPage() {
       document.removeEventListener("fullscreenchange", handleFullScreenChange);
   }, []);
   useEffect(() => {
+    // This effect runs ONLY when a NEW item is added (cart length changes)
     if (state.cart.length > 0) {
       const lastItem = state.cart[state.cart.length - 1];
       const lastItemRef = cartItemRefs.current.get(lastItem.id);
@@ -916,37 +950,33 @@ export default function PosPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="hidden md:flex rounded-lg border bg-slate-100 p-0.5">
+                      <div className="flex items-center gap-2">
                         <Button
-                          variant={
-                            state.priceTier === "retail" ? "secondary" : "ghost"
-                          }
-                          className="h-8 rounded-md text-sm shadow-sm bg-white data-[state=active]:bg-white"
-                          onClick={() =>
-                            dispatch({
-                              type: "SET_PRICE_TIER",
-                              payload: "retail",
-                            })
-                          }
-                        >
-                          Retail
-                        </Button>
-                        <Button
-                          variant={
-                            state.priceTier === "wholesale"
-                              ? "secondary"
-                              : "ghost"
-                          }
-                          className="h-8 rounded-md text-sm data-[state=active]:bg-white"
-                          onClick={() =>
-                            dispatch({
-                              type: "SET_PRICE_TIER",
-                              payload: "wholesale",
-                            })
-                          }
+                          variant={state.isWholesale ? "secondary" : "outline"}
+                          size="sm"
+                          className="h-9 bg-white data-[state=active]:bg-white"
+                          onClick={handleWholesaleToggle}
                         >
                           Wholesale
                         </Button>
+                        {state.isWholesale && (
+                          <div className="relative">
+                            <Input
+                              type="number"
+                              placeholder="Discount"
+                              className="h-9 w-28 pl-2 pr-7 text-sm bg-white"
+                              value={wholesaleDiscount || ""}
+                              onChange={(e) =>
+                                setWholesaleDiscount(
+                                  Math.max(0, Number(e.target.value))
+                                )
+                              }
+                            />
+                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+                              %
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <Button
                         variant="outline"
@@ -981,7 +1011,7 @@ export default function PosPage() {
                 </header>
                 <div className="flex-1 p-4 overflow-y-auto bg-slate-100/60">
                   {state.cart.length > 0 ? (
-                    <div className="space-y-4 max-w-5xl mx-auto">
+                    <div className="space-y-2 max-w-full mx-auto">
                       {state.cart.map((item, index) => (
                         <CartItemCard
                           key={item.id}
@@ -1010,10 +1040,59 @@ export default function PosPage() {
                     </div>
                   )}
                 </div>
-                {/* --- FOOTER MODIFIED --- */}
                 <footer className="border-t border-slate-200/60 bg-white/80 backdrop-blur-sm p-4 shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.02)]">
                   {state.cart.length > 0 && (
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-7xl mx-auto items-start">
+                      <div className="lg:col-span-7 flex flex-col gap-3">
+                        <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
+                          {utilityActions.map((action) => (
+                            <Button
+                              key={action.label}
+                              variant="outline"
+                              className="h-16 flex-col gap-1.5 text-xs bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                              onClick={action.action}
+                              disabled={action.disabled}
+                            >
+                              <action.icon className="h-5 w-5" />
+                              <span className="text-center leading-tight">
+                                {action.label}
+                              </span>
+                            </Button>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <UserSelector
+                            users={users}
+                            selectedUser={soldBy}
+                            onSelectUser={setSoldBy}
+                          />
+                          <Button
+                            variant="outline"
+                            className="h-16 flex-col justify-center gap-1.5 text-xs bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800"
+                          >
+                            <CreditCard className="h-5 w-5 text-indigo-600" />
+                            <span>Pay by Card</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="h-16 flex-col justify-center gap-1.5 text-xs bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800"
+                          >
+                            <Wallet className="h-5 w-5 text-emerald-600" />
+                            <span>Pay by Cash</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="h-16 flex-col justify-center gap-1.5 text-xs bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800"
+                          >
+                            <Tag className="h-5 w-5 text-orange-500" />
+                            <span>Pay by Voucher</span>
+                          </Button>
+                        </div>
+                        <Button className="h-20 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3">
+                          <DollarSign className="h-7 w-7" />
+                          <span>PAY NOW (LKR {netTotal.toFixed(2)})</span>
+                        </Button>
+                      </div>
                       <div className="lg:col-span-5 space-y-2.5 bg-slate-50/80 p-4 rounded-xl border border-slate-200/80">
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600">Subtotal</span>
@@ -1022,11 +1101,21 @@ export default function PosPage() {
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-slate-600">Discount</span>
+                          <span className="text-slate-600">Item Discounts</span>
                           <span className="font-medium text-red-600">
-                            - LKR {totals.totalDiscount.toFixed(2)}
+                            - LKR {totals.totalItemDiscount.toFixed(2)}
                           </span>
                         </div>
+                        {state.isWholesale && wholesaleDiscount > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-slate-600">
+                              Wholesale Discount ({wholesaleDiscount}%)
+                            </span>
+                            <span className="font-medium text-red-600">
+                              - LKR {wholesaleDiscountAmount.toFixed(2)}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600">Tax (8%)</span>
                           <span className="font-medium text-slate-800">
@@ -1054,76 +1143,29 @@ export default function PosPage() {
                           <span className="text-slate-900">Net Total</span>
                           <span>LKR {netTotal.toFixed(2)}</span>
                         </div>
-                      </div>
-
-                      <div className="lg:col-span-7 flex flex-col gap-3">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <div className="col-span-2 md:col-span-4 p-4 rounded-xl border border-slate-200/80 bg-slate-50/80 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-sm font-medium text-slate-700 block mb-1.5">
-                                Cash In
-                              </label>
-                              <Input
-                                type="number"
-                                placeholder="0.00"
-                                className="h-12 text-lg font-semibold bg-white"
-                                value={cashIn || ""}
-                                onChange={(e) =>
-                                  setCashIn(parseFloat(e.target.value) || 0)
-                                }
-                              />
-                            </div>
-                            <div className="text-right">
-                              <label className="text-sm font-medium text-slate-700 block mb-1.5">
-                                Balance
-                              </label>
-                              <div className="h-12 flex items-center justify-end rounded-lg bg-emerald-100 text-emerald-700 font-bold text-3xl px-4">
-                                {balance.toFixed(2)}
-                              </div>
+                        <div className="col-span-2 md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium text-slate-700 block mb-1.5">
+                              Cash In
+                            </label>
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              className="h-12 text-lg font-semibold bg-white"
+                              value={cashIn || ""}
+                              onChange={(e) =>
+                                setCashIn(parseFloat(e.target.value) || 0)
+                              }
+                            />
+                          </div>
+                          <div className="text-right">
+                            <label className="text-sm font-medium text-slate-700 block mb-1.5">
+                              Balance
+                            </label>
+                            <div className="h-12 flex items-center justify-end rounded-lg bg-emerald-100 text-emerald-700 font-bold text-3xl px-4">
+                              {balance.toFixed(2)}
                             </div>
                           </div>
-
-                          <UserSelector
-                            users={users}
-                            selectedUser={soldBy}
-                            onSelectUser={setSoldBy}
-                          />
-
-                          <Button
-                            variant="outline"
-                            className="h-16 flex-col gap-1 text-xs bg-white"
-                          >
-                            <CreditCard className="h-5 w-5 text-indigo-600" />{" "}
-                            Pay by Card
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="h-16 flex-col gap-1 text-xs bg-white"
-                          >
-                            <Wallet className="h-5 w-5 text-emerald-600" /> Pay
-                            by Cash
-                          </Button>
-                          <Button className="h-16 bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all flex-col gap-1">
-                            <DollarSign className="h-6 w-6" /> PAY
-                          </Button>
-                        </div>
-
-                        {/* --- NEW BUTTONS SECTION --- */}
-                        <div className="grid grid-cols-4 lg:grid-cols-8 gap-2">
-                          {utilityActions.map((action) => (
-                            <Button
-                              key={action.label}
-                              variant="outline"
-                              className="h-16 flex-col gap-1.5 text-xs bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
-                              onClick={action.action}
-                              disabled={action.disabled}
-                            >
-                              <action.icon className="h-5 w-5" />
-                              <span className="text-center leading-tight">
-                                {action.label}
-                              </span>
-                            </Button>
-                          ))}
                         </div>
                       </div>
                     </div>
