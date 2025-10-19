@@ -39,10 +39,15 @@ export default function AppLayout({ children }) {
   
   return (
       <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset> 
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar variant="inset" />
+          <div className="flex-1 overflow-x-auto"> {/* Container for scrolling */}
+            <SidebarInset>
+           
+              {children}
+            </SidebarInset>
+          </div>
+        </div>
+      </SidebarProvider>
   );
 }
