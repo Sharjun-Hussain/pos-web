@@ -48,7 +48,7 @@ const data = {
       items: [
         {
           title: "Main Category",
-          url: "#",
+          url: "/configurations/main-category",
         },
         {
           title: "Sub Category",
