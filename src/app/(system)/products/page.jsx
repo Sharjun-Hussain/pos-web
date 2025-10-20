@@ -1,3 +1,6 @@
+"use client"; // Required for useState
+
+import { useState } from "react";
 import { columns } from "@/components/products/columns";
 import { DataTable } from "@/components/products/data-table";
 import { Button } from "@/components/ui/button";
@@ -9,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Search, Download, Filter } from "lucide-react";
+import { PlusCircle, Search, Download, Filter, Loader2 } from "lucide-react"; // 1. Import Loader2
 import Link from "next/link";
 
 // Enhanced mock data with more realistic product information
@@ -79,6 +82,9 @@ const productStats = {
 };
 
 export default function ProductsPage() {
+  // 2. Add state to track navigation
+  const [isNavigating, setIsNavigating] = useState(false);
+
   return (
     <div className="hidden h-full flex-1 flex-col space-y-6 p-6 md:flex">
       {/* Header Section */}
@@ -97,9 +103,18 @@ export default function ProductsPage() {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Link href="/dashboard/products/new">
-            <Button className="gap-2">
-              <PlusCircle className="h-4 w-4" />
+          <Link href="/products/new" passHref>
+            {/* 3. Update the Button to use the loading state */}
+            <Button
+              onClick={() => setIsNavigating(true)}
+              disabled={isNavigating}
+              className="gap-2"
+            >
+              {isNavigating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <PlusCircle className="h-4 w-4" />
+              )}
               Add Product
             </Button>
           </Link>
