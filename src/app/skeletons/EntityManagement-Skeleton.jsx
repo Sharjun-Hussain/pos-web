@@ -15,7 +15,7 @@ export const EntityManagementSkeleton = ({ columns, defaultPageSize = 10 }) => {
   return (
     <div className="container mx-auto py-8 px-4 flex flex-col gap-6">
       {/* Header Skeleton */}
-      <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
+      <div className=" rounded-lg">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="w-full md:w-1/3 space-y-3">
             <Skeleton className="h-8 w-3/4" />

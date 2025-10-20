@@ -229,9 +229,9 @@ export const EntityManagement = ({
   const visibleColumns = columns.filter((col) => col.visible !== false);
 
   return (
-    <div className="container mx-auto py-8 px-4 flex flex-col gap-6">
+    <div className="container mx-auto px-4 flex flex-col my-6 gap-6">
       {/* Redesigned Header */}
-      <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
+      <div className="">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">
