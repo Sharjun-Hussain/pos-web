@@ -1,10 +1,18 @@
 import { columns } from "@/components/products/columns";
 import { DataTable } from "@/components/products/data-table";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { PlusCircle, Search, Download, Filter } from "lucide-react";
 import Link from "next/link";
 
-// Mock data directly in the component
+// Enhanced mock data with more realistic product information
 const mockProducts = [
   {
     id: "prod_1",
@@ -14,6 +22,10 @@ const mockProducts = [
     category: { id: "cat_apparel", name: "Apparel" },
     stock: 152,
     status: "active",
+    price: 29.99,
+    cost: 12.5,
+    supplier: "EcoWear Inc.",
+    lastUpdated: "2024-01-15",
   },
   {
     id: "prod_2",
@@ -23,6 +35,10 @@ const mockProducts = [
     category: { id: "cat_grocery", name: "Groceries" },
     stock: 8,
     status: "active",
+    price: 16.99,
+    cost: 8.2,
+    supplier: "Bean Masters",
+    lastUpdated: "2024-01-18",
   },
   {
     id: "prod_3",
@@ -32,29 +48,135 @@ const mockProducts = [
     category: { id: "cat_electronics", name: "Electronics" },
     stock: 0,
     status: "archived",
+    price: 49.99,
+    cost: 28.5,
+    supplier: "TechGear Ltd.",
+    lastUpdated: "2024-01-10",
+  },
+  {
+    id: "prod_4",
+    name: "Stainless Steel Water Bottle",
+    sku: "ACC-WB-750",
+    image: "https://via.placeholder.com/40",
+    category: { id: "cat_accessories", name: "Accessories" },
+    stock: 45,
+    status: "active",
+    price: 24.99,
+    cost: 11.8,
+    supplier: "HydroFlask Co.",
+    lastUpdated: "2024-01-20",
   },
 ];
 
+// Calculate statistics from mock data
+const productStats = {
+  totalProducts: mockProducts.length,
+  lowStock: mockProducts.filter(
+    (product) => product.stock > 0 && product.stock < 10
+  ).length,
+  outOfStock: mockProducts.filter((product) => product.stock === 0).length,
+  categories: new Set(mockProducts.map((product) => product.category.id)).size,
+};
+
 export default function ProductsPage() {
   return (
-    <div className="hidden h-full flex-1 flex-col space-y-8 p-8 md:flex">
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Products</h2>
+    <div className="hidden h-full flex-1 flex-col space-y-6 p-6 md:flex">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Product Inventory
+          </h1>
           <p className="text-muted-foreground">
-            Here's a list of all products in your inventory.
+            Manage your product catalog, inventory levels, and product
+            information
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
+          <Button variant="outline" className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
           <Link href="/dashboard/products/new">
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
+            <Button className="gap-2">
+              <PlusCircle className="h-4 w-4" />
               Add Product
             </Button>
           </Link>
         </div>
       </div>
-      <DataTable data={mockProducts} columns={columns} />
+
+      {/* Statistics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Products
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {productStats.totalProducts}
+            </div>
+            <p className="text-xs text-muted-foreground">Active in catalog</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">
+              {productStats.lowStock}
+            </div>
+            <p className="text-xs text-muted-foreground">Needs restocking</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive">
+              {productStats.outOfStock}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Requires immediate attention
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Categories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{productStats.categories}</div>
+            <p className="text-xs text-muted-foreground">Product categories</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Products Table Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Product Catalog</CardTitle>
+              <CardDescription>
+                All products in your inventory. Manage stock, prices, and
+                product details.
+              </CardDescription>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Showing {mockProducts.length} products
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Data Table */}
+          <DataTable data={mockProducts} columns={columns} />
+        </CardContent>
+      </Card>
     </div>
   );
 }
