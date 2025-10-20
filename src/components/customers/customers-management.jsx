@@ -126,6 +126,18 @@ export function CustomersManagement() {
           </AddCustomerDialog>
         }
       />
+      {/* <PageHeader
+        title="Customer Management"
+        description="Manage customer information and loyalty programs"
+        action={
+          <AddCustomerDialog onAdd={addCustomer}>
+            <Button size="lg">
+              <Plus className="mr-2 h-5 w-5" />
+              Add Customer
+            </Button>
+          </AddCustomerDialog>
+        }
+      /> */}
 
       <div className="flex-1 overflow-hidden p-8">
         <CustomerStats customers={customers} />
