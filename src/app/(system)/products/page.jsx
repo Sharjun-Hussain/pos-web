@@ -12,7 +12,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Search, Download, Filter, Loader2 } from "lucide-react"; // 1. Import Loader2
+import {
+  PlusCircle,
+  Search,
+  Download,
+  Filter,
+  Loader2,
+  Package,
+  CheckCircle,
+  AlertTriangle,
+  AlertCircle,
+  XCircle,
+  Layers,
+  Folder,
+} from "lucide-react"; // 1. Import Loader2
 import Link from "next/link";
 
 // Enhanced mock data with more realistic product information
@@ -123,50 +136,59 @@ export default function ProductsPage() {
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Products
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {productStats.totalProducts}
+        <Card className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+          <CardContent className="p-0 flex items-stretch gap-4">
+            <div className="p-3 bg-blue-50 rounded-lg flex items-center justify-center">
+              <Package className="h-6 w-6 text-blue-600" />
             </div>
-            <p className="text-xs text-muted-foreground">Active in catalog</p>
+            <div className="flex flex-col justify-center">
+              <div className="text-sm text-gray-500 mb-1">Total Products</div>
+              <div className="text-3xl font-bold text-gray-900">
+                {productStats.totalProducts}
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">
-              {productStats.lowStock}
+
+        <Card className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+          <CardContent className="p-0 flex items-stretch gap-4">
+            <div className="p-3 bg-amber-50 rounded-lg flex items-center justify-center">
+              <AlertTriangle className="h-6 w-6 text-amber-600" />
             </div>
-            <p className="text-xs text-muted-foreground">Needs restocking</p>
+            <div className="flex flex-col justify-center">
+              <div className="text-sm text-gray-500 mb-1">Low Stock</div>
+              <div className="text-3xl font-bold text-amber-600">
+                {productStats.lowStock}
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {productStats.outOfStock}
+
+        <Card className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+          <CardContent className="p-0 flex items-stretch gap-4">
+            <div className="p-3 bg-red-50 rounded-lg flex items-center justify-center">
+              <XCircle className="h-6 w-6 text-red-600" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Requires immediate attention
-            </p>
+            <div className="flex flex-col justify-center">
+              <div className="text-sm text-gray-500 mb-1">Out of Stock</div>
+              <div className="text-3xl font-bold text-red-600">
+                {productStats.outOfStock}
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{productStats.categories}</div>
-            <p className="text-xs text-muted-foreground">Product categories</p>
+
+        <Card className="p-4 hover:shadow-md transition-shadow duration-200 cursor-pointer">
+          <CardContent className="p-0 flex items-stretch gap-4">
+            <div className="p-3 bg-green-50 rounded-lg flex items-center justify-center">
+              <Layers className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="flex flex-col justify-center">
+              <div className="text-sm text-gray-500 mb-1">Categories</div>
+              <div className="text-3xl font-bold text-gray-900">
+                {productStats.categories}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
