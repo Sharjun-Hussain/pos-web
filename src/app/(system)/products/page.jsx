@@ -146,18 +146,13 @@ const ProductTableToolbar = ({ table, bulkActionsComponent }) => {
 
   return (
     <div className="flex items-center justify-between space-x-4 mb-4">
-      {/* This div contains all your custom filters.
-        You can add as many as you want here.
-      */}
       <div className="flex flex-1 items-center space-x-2">
         {/* Filter by Name (Search Input) */}
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Filter products by name..."
-            // Get the value from the table state
             value={table.getColumn("name")?.getFilterValue() ?? ""}
-            // Set the value in the table state
             onChange={(event) =>
               table.getColumn("name")?.setFilterValue(event.target.value)
             }
@@ -165,11 +160,9 @@ const ProductTableToolbar = ({ table, bulkActionsComponent }) => {
           />
         </div>
 
-        {/* NEW: Filter by Status (Dropdown) */}
         <Select
           value={table.getColumn("status")?.getFilterValue() ?? ""}
           onValueChange={(value) => {
-            // Use 'undefined' instead of "" to clear the filter
             table.getColumn("status")?.setFilterValue(value || undefined);
           }}
         >
@@ -182,17 +175,13 @@ const ProductTableToolbar = ({ table, bulkActionsComponent }) => {
             <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
-
-        {/* You could add more filters here (e.g., categories) */}
       </div>
 
-      {/* Render the bulkActionsComponent prop if it exists and rows are selected. */}
       {numSelected > 0 && bulkActionsComponent}
     </div>
   );
 };
 
-// Calculate statistics from mock data
 const productStats = {
   totalProducts: mockProducts.length,
   lowStock: mockProducts.filter(
@@ -203,17 +192,13 @@ const productStats = {
 };
 
 export default function ProductsPage() {
-  // 2. Add state to track navigation
   const [isNavigating, setIsNavigating] = useState(false);
-  // --- NEW: All table state is managed here ---
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
 
-  // Use your mock data
   const data = mockProducts;
 
-  // --- NEW: Initialize useReactTable here ---
   const table = useReactTable({
     data,
     columns,
@@ -221,8 +206,6 @@ export default function ProductsPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-
-    // Connect state and setters
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
@@ -252,7 +235,6 @@ export default function ProductsPage() {
             Export
           </Button>
           <Link href="/products/new" passHref>
-            {/* 3. Update the Button to use the loading state */}
             <Button
               onClick={() => setIsNavigating(true)}
               disabled={isNavigating}
@@ -345,17 +327,11 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* NEW: Render your custom toolbar here, 
-            passing the 'table' object to it.
-          */}
           <ProductTableToolbar
             table={table}
             bulkActionsComponent={<ProductBulkActions table={table} />}
           />
 
-          {/* NEW: Render the dumb DataTable,
-            passing the 'table' and 'columns' to it.
-          */}
           <DataTable table={table} columns={columns} />
         </CardContent>
       </Card>

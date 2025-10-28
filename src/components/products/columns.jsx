@@ -79,6 +79,7 @@ export const columns = [
       <DataTableColumnHeader column={column} title="Category" />
     ),
   },
+
   {
     accessorKey: "stock",
     header: ({ column }) => (

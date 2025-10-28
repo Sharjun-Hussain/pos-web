@@ -24,10 +24,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-/**
- * Renders the pagination controls.
- * This component is unchanged, as it only needs the 'table' prop.
- */
 const DataTablePagination = ({ table }) => {
   return (
     <div className="flex items-center justify-between px-2 py-4">
@@ -103,17 +99,9 @@ const DataTablePagination = ({ table }) => {
   );
 };
 
-/**
- * The new, "dumb" DataTable component.
- * It receives the 'table' object and 'columns' array as props.
- * It is only responsible for rendering the UI.
- */
 export function DataTable({ table, columns }) {
   return (
     <div className="space-y-4">
-      {/* The DataTableToolbar is no longer here. 
-        It will be rendered by the parent page (`ProductsPage`).
-      */}
       <div className="rounded-md border">
         <UITable>
           <TableHeader>
@@ -165,7 +153,6 @@ export function DataTable({ table, columns }) {
         </UITable>
       </div>
 
-      {/* The pagination component is rendered here */}
       <DataTablePagination table={table} />
     </div>
   );
