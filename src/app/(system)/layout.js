@@ -1,30 +1,14 @@
-// app/(app)/layout.jsx
+
 'use client';
-
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Home, ShoppingCart, Package, Users, LogOut } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
-import { signOut } from 'next-auth/react';
-
-
 import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { DashboardLayoutSkeleton } from '../skeletons/Dashboard-skeleton';
+import { SystemBreadcrumb } from '@/components/general/breadcrumb/Breadcrumb';
 export default function AppLayout({ children }) {
 
   const { status } = useSession();
@@ -43,8 +27,10 @@ export default function AppLayout({ children }) {
           <AppSidebar variant="inset" />
           <div className="flex-1 overflow-x-auto"> {/* Container for scrolling */}
             <SidebarInset>
-           
+           <div className='flex flex-col'>
+           <div className='mt-3 mx-6 rounded-sm'> <SystemBreadcrumb/></div>
               {children}
+           </div>
             </SidebarInset>
           </div>
         </div>

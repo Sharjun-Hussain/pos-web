@@ -99,7 +99,7 @@ export default function ProductsPage() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   return (
-    <div className="hidden h-full flex-1 flex-col space-y-6 p-6 md:flex">
+    <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
