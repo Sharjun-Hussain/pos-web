@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react"; // Import useEffect
+import { useState, useEffect, cloneElement } from "react"; // Import ReactElement and cloneElement
 import {
   flexRender,
   getCoreRowModel,
@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
-  Table,
+  Table as UITable,
   TableBody,
   TableCell,
   TableHead,
@@ -19,12 +19,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   ChevronLeft,
   ChevronRight,
@@ -40,31 +34,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// --- Toolbar Component ---
-const DataTableToolbar = ({ table }) => {
+function DataTableToolbar({
+  table,
+  filterColumnId,
+  filterPlaceholder,
+  bulkActionsComponent,
+}) {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
 
-  // Debounce logic starts here
-  const globalFilter = table.getColumn("name")?.getFilterValue();
+  const globalFilter = table.getColumn(filterColumnId)?.getFilterValue();
   const [filterValue, setFilterValue] = useState(globalFilter ?? "");
 
   useEffect(() => {
+    // Sync local state if table filter changes externally
+    setFilterValue(globalFilter ?? "");
+  }, [globalFilter]);
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
-      table.getColumn("name")?.setFilterValue(filterValue);
-    }, 500); // 500ms delay before applying the filter
+      // Use the filterColumnId prop here
+      table.getColumn(filterColumnId)?.setFilterValue(filterValue);
+    }, 500);
 
     return () => clearTimeout(timeout);
-  }, [filterValue]);
-  // Debounce logic ends here
+    // Add filterColumnId and table to dependencies
+  }, [filterValue, filterColumnId, table]);
 
   return (
-    <div className="flex items-center justify-between py-4">
+    <div className="flex items-center">
       <div className="flex flex-1 items-center space-x-2">
-        <div className="relative">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Filter products by name..."
-            // Use the local state for the input value and onChange handler
+            placeholder={filterPlaceholder ?? "Search..."}
             value={filterValue}
             onChange={(event) => setFilterValue(event.target.value)}
             className="max-w-sm pl-10"
@@ -72,33 +74,16 @@ const DataTableToolbar = ({ table }) => {
         </div>
       </div>
 
-      {numSelected > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Actions ({numSelected})
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => console.log("Archiving selected rows")}
-            >
-              Archive Selected
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-500"
-              onClick={() => console.log("Deleting selected rows")}
-            >
-              Delete Selected
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      {/* Render the bulkActionsComponent prop if it exists and rows are selected.
+        We use cloneElement to inject the 'table' prop into the component.
+      */}
+      {numSelected > 0 &&
+        bulkActionsComponent &&
+        cloneElement(bulkActionsComponent, { table })}
     </div>
   );
-};
+}
 
-// --- Pagination Component ---
 const DataTablePagination = ({ table }) => {
   return (
     <div className="flex items-center justify-between px-2 py-4">
@@ -174,8 +159,13 @@ const DataTablePagination = ({ table }) => {
   );
 };
 
-// --- Main DataTable Component ---
-export function DataTable({ columns, data }) {
+export function DataTable({
+  columns,
+  data,
+  filterColumnId,
+  filterPlaceholder,
+  bulkActionsComponent,
+}) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
@@ -199,9 +189,14 @@ export function DataTable({ columns, data }) {
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} />
+      <DataTableToolbar
+        table={table}
+        filterColumnId={filterColumnId}
+        filterPlaceholder={filterPlaceholder}
+        bulkActionsComponent={bulkActionsComponent}
+      />
       <div className="rounded-md border">
-        <Table>
+        <UITable>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -248,7 +243,7 @@ export function DataTable({ columns, data }) {
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </UITable>
       </div>
       <DataTablePagination table={table} />
     </div>

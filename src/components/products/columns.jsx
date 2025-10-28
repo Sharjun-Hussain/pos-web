@@ -22,7 +22,7 @@ const DataTableColumnHeader = ({ column, title }) => {
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >
       {title}
-      <ArrowUpDown className="ml-2 h-4 w-4" />
+      <ArrowUpDown className="ml-2 h-1 w-1 text-gray-700 opacity-60" />
     </Button>
   );
 };

@@ -1,19 +1,37 @@
 "use client";
 
+import { ArrowUpDown, MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
-// JSDoc comment to describe the shape of the Branch object for clarity
-/**
- * @typedef Branch
- * @property {string} id
- * @property {string} name
- * @property {{ city: string; country: string; }} location
- * @property {string} manager
- * @property {number} staffCount
- * @property {'active' | 'inactive'} status
- */
+// ---
+// NOTE: You might want to move this helper to a shared file,
+// since it's used by both products-columns.jsx and here.
+// ---
+const DataTableColumnHeader = ({ column, title }) => {
+  return (
+    <Button
+      variant="ghost"
+      onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+    >
+      {title}
+      <ArrowUpDown className="ml-2 h-4 w-4" />
+    </Button>
+  );
+};
 
+// ---
+// This is the new, branch-specific column definition
+// ---
 export const columns = [
   {
     id: "select",
@@ -35,43 +53,67 @@ export const columns = [
       />
     ),
     enableSorting: false,
+    enableHiding: false,
   },
   {
+    // This is the column we will filter by
     accessorKey: "name",
-    header: "Branch Name",
-  },
-  {
-    accessorKey: "location",
-    header: "Location",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Branch Name" />
+    ),
     cell: ({ row }) => {
-      const location = row.original.location;
-      return `${location.city}, ${location.country}`;
-    },
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status");
       return (
-        <Badge variant={status === "active" ? "success" : "secondary"}>
-          {status}
-        </Badge>
+        <div className="flex flex-col">
+          <span className="font-medium">{row.original.name}</span>
+          <span className="text-sm text-muted-foreground">
+            {row.original.address}
+          </span>
+        </div>
       );
     },
   },
   {
     accessorKey: "manager",
-    header: "Manager",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Manager" />
+    ),
   },
   {
-    accessorKey: "staffCount",
-    header: "Staff Count",
+    accessorKey: "status",
+    header: "Status",
     cell: ({ row }) => {
+      const status = row.original.status;
+      const variant = status === "active" ? "default" : "outline";
+
       return (
-        <div className="text-center font-medium">
-          {row.getValue("staffCount")}
-        </div>
+        <Badge variant={variant}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </Badge>
+      );
+    },
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const branch = row.original;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem>Edit Branch</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-red-500">
+              Deactivate
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },

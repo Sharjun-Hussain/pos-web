@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { columns } from "@/components/products/columns";
-import { DataTable } from "@/components/products/data-table";
+import { DataTable } from "@/components/general/data-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,6 +27,12 @@ import {
   Folder,
 } from "lucide-react"; // 1. Import Loader2
 import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Enhanced mock data with more realistic product information
 const mockProducts = [
@@ -83,6 +89,45 @@ const mockProducts = [
     lastUpdated: "2024-01-20",
   },
 ];
+
+// --- 1. Create the Product-Specific Bulk Actions Component ---
+// This component receives the 'table' prop injected by DataTableToolbar
+const ProductBulkActions = ({ table }) => {
+  const numSelected = table.getFilteredSelectedRowModel().rows.length;
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+
+  const handleArchive = () => {
+    const selectedIds = selectedRows.map((row) => row.original.id);
+    console.log("Archiving products:", selectedIds);
+    // Add your API call logic here
+    table.resetRowSelection(); // Clear selection after action
+  };
+
+  const handleDelete = () => {
+    const selectedIds = selectedRows.map((row) => row.original.id);
+    console.log("Deleting products:", selectedIds);
+    // Add your API call logic here
+    table.resetRowSelection();
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="ml-auto">
+          Actions ({numSelected})
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={handleArchive}>
+          Archive Selected
+        </DropdownMenuItem>
+        <DropdownMenuItem className="text-red-500" onClick={handleDelete}>
+          Delete Selected
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 // Calculate statistics from mock data
 const productStats = {
@@ -211,7 +256,13 @@ export default function ProductsPage() {
         </CardHeader>
         <CardContent>
           {/* Data Table */}
-          <DataTable data={mockProducts} columns={columns} />
+          <DataTable
+            data={mockProducts}
+            columns={columns}
+            filterColumnId="name" // Specify which column to filter
+            filterPlaceholder="Filter products by name..." // Specify placeholder
+            bulkActionsComponent={<ProductBulkActions />} // Pass your actions component
+          />
         </CardContent>
       </Card>
     </div>

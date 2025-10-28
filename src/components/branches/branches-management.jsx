@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { DataTable } from "@/components/branches/data-table";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,6 +19,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { columns } from "./branches-column";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { DataTable } from "../general/data-table";
 
 // Mock Data for Branches
 const mockBranches = [
@@ -72,6 +78,30 @@ const branchStats = {
     .length,
   totalStaff: mockBranches.reduce((acc, branch) => acc + branch.staffCount, 0),
   locations: new Set(mockBranches.map((branch) => branch.location.city)).size,
+};
+
+const BranchBulkActions = ({ table }) => {
+  const numSelected = table.getFilteredSelectedRowModel().rows.length;
+
+  const handleDeactivate = () => {
+    console.log("Deactivating selected branches...");
+    table.resetRowSelection();
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" className="ml-auto">
+          Actions ({numSelected})
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem className="text-red-500" onClick={handleDeactivate}>
+          Deactivate Selected
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 };
 
 export default function BranchesPage() {
@@ -185,7 +215,13 @@ export default function BranchesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <DataTable data={mockBranches} columns={columns} />
+          <DataTable
+            data={mockBranches}
+            columns={columns}
+            filterColumnId="name" // Filter by "name" column
+            filterPlaceholder="Filter branches by name..." // New placeholder
+            bulkActionsComponent={<BranchBulkActions />} // New bulk actions
+          />
         </CardContent>
       </Card>
     </div>
