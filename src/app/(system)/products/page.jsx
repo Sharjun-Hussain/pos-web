@@ -33,6 +33,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Enhanced mock data with more realistic product information
 const mockProducts = [
@@ -90,8 +104,6 @@ const mockProducts = [
   },
 ];
 
-// --- 1. Create the Product-Specific Bulk Actions Component ---
-// This component receives the 'table' prop injected by DataTableToolbar
 const ProductBulkActions = ({ table }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
   const selectedRows = table.getFilteredSelectedRowModel().rows;
@@ -129,6 +141,57 @@ const ProductBulkActions = ({ table }) => {
   );
 };
 
+const ProductTableToolbar = ({ table, bulkActionsComponent }) => {
+  const numSelected = table.getFilteredSelectedRowModel().rows.length;
+
+  return (
+    <div className="flex items-center justify-between space-x-4 mb-4">
+      {/* This div contains all your custom filters.
+        You can add as many as you want here.
+      */}
+      <div className="flex flex-1 items-center space-x-2">
+        {/* Filter by Name (Search Input) */}
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Filter products by name..."
+            // Get the value from the table state
+            value={table.getColumn("name")?.getFilterValue() ?? ""}
+            // Set the value in the table state
+            onChange={(event) =>
+              table.getColumn("name")?.setFilterValue(event.target.value)
+            }
+            className="pl-10"
+          />
+        </div>
+
+        {/* NEW: Filter by Status (Dropdown) */}
+        <Select
+          value={table.getColumn("status")?.getFilterValue() ?? ""}
+          onValueChange={(value) => {
+            // Use 'undefined' instead of "" to clear the filter
+            table.getColumn("status")?.setFilterValue(value || undefined);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={undefined}>All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="archived">Archived</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* You could add more filters here (e.g., categories) */}
+      </div>
+
+      {/* Render the bulkActionsComponent prop if it exists and rows are selected. */}
+      {numSelected > 0 && bulkActionsComponent}
+    </div>
+  );
+};
+
 // Calculate statistics from mock data
 const productStats = {
   totalProducts: mockProducts.length,
@@ -142,6 +205,33 @@ const productStats = {
 export default function ProductsPage() {
   // 2. Add state to track navigation
   const [isNavigating, setIsNavigating] = useState(false);
+  // --- NEW: All table state is managed here ---
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [rowSelection, setRowSelection] = useState({});
+
+  // Use your mock data
+  const data = mockProducts;
+
+  // --- NEW: Initialize useReactTable here ---
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+
+    // Connect state and setters
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      rowSelection,
+    },
+  });
 
   return (
     <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
@@ -255,14 +345,18 @@ export default function ProductsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Data Table */}
-          <DataTable
-            data={mockProducts}
-            columns={columns}
-            filterColumnId="name" // Specify which column to filter
-            filterPlaceholder="Filter products by name..." // Specify placeholder
-            bulkActionsComponent={<ProductBulkActions />} // Pass your actions component
+          {/* NEW: Render your custom toolbar here, 
+            passing the 'table' object to it.
+          */}
+          <ProductTableToolbar
+            table={table}
+            bulkActionsComponent={<ProductBulkActions table={table} />}
           />
+
+          {/* NEW: Render the dumb DataTable,
+            passing the 'table' and 'columns' to it.
+          */}
+          <DataTable table={table} columns={columns} />
         </CardContent>
       </Card>
     </div>

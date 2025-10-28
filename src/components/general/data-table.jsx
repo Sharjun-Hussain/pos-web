@@ -1,14 +1,6 @@
 "use client";
 
-import { useState, useEffect, cloneElement } from "react"; // Import ReactElement and cloneElement
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { flexRender } from "@tanstack/react-table";
 import {
   Table as UITable,
   TableBody,
@@ -18,13 +10,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Search,
 } from "lucide-react";
 import {
   Select,
@@ -34,56 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-function DataTableToolbar({
-  table,
-  filterColumnId,
-  filterPlaceholder,
-  bulkActionsComponent,
-}) {
-  const numSelected = table.getFilteredSelectedRowModel().rows.length;
-
-  const globalFilter = table.getColumn(filterColumnId)?.getFilterValue();
-  const [filterValue, setFilterValue] = useState(globalFilter ?? "");
-
-  useEffect(() => {
-    // Sync local state if table filter changes externally
-    setFilterValue(globalFilter ?? "");
-  }, [globalFilter]);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      // Use the filterColumnId prop here
-      table.getColumn(filterColumnId)?.setFilterValue(filterValue);
-    }, 500);
-
-    return () => clearTimeout(timeout);
-    // Add filterColumnId and table to dependencies
-  }, [filterValue, filterColumnId, table]);
-
-  return (
-    <div className="flex items-center">
-      <div className="flex flex-1 items-center space-x-2">
-        <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={filterPlaceholder ?? "Search..."}
-            value={filterValue}
-            onChange={(event) => setFilterValue(event.target.value)}
-            className="max-w-sm pl-10"
-          />
-        </div>
-      </div>
-
-      {/* Render the bulkActionsComponent prop if it exists and rows are selected.
-        We use cloneElement to inject the 'table' prop into the component.
-      */}
-      {numSelected > 0 &&
-        bulkActionsComponent &&
-        cloneElement(bulkActionsComponent, { table })}
-    </div>
-  );
-}
-
+/**
+ * Renders the pagination controls.
+ * This component is unchanged, as it only needs the 'table' prop.
+ */
 const DataTablePagination = ({ table }) => {
   return (
     <div className="flex items-center justify-between px-2 py-4">
@@ -159,42 +103,17 @@ const DataTablePagination = ({ table }) => {
   );
 };
 
-export function DataTable({
-  columns,
-  data,
-  filterColumnId,
-  filterPlaceholder,
-  bulkActionsComponent,
-}) {
-  const [sorting, setSorting] = useState([]);
-  const [columnFilters, setColumnFilters] = useState([]);
-  const [rowSelection, setRowSelection] = useState({});
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      rowSelection,
-    },
-  });
-
+/**
+ * The new, "dumb" DataTable component.
+ * It receives the 'table' object and 'columns' array as props.
+ * It is only responsible for rendering the UI.
+ */
+export function DataTable({ table, columns }) {
   return (
     <div className="space-y-4">
-      <DataTableToolbar
-        table={table}
-        filterColumnId={filterColumnId}
-        filterPlaceholder={filterPlaceholder}
-        bulkActionsComponent={bulkActionsComponent}
-      />
+      {/* The DataTableToolbar is no longer here. 
+        It will be rendered by the parent page (`ProductsPage`).
+      */}
       <div className="rounded-md border">
         <UITable>
           <TableHeader>
@@ -245,6 +164,8 @@ export function DataTable({
           </TableBody>
         </UITable>
       </div>
+
+      {/* The pagination component is rendered here */}
       <DataTablePagination table={table} />
     </div>
   );

@@ -1,7 +1,8 @@
 {
-  "name": "pos-web",
+  "name": "emi-pos",
   "version": "0.1.0",
   "private": true,
+  "description": "Developed By : Inzeedo (PVT) Ltd. for Eminense Soft Solution (PVT) Ltd.",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",

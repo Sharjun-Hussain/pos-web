@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,39 +14,7 @@ import { usePathname } from "next/navigation";
 
 export function SystemBreadcrumb() {
   const pathname = usePathname();
-
-  // Generate breadcrumb items from the pathname, filtering out "app"
-  const generateBreadcrumbItems = () => {
-    if (pathname === "/") return null;
-
-    const pathSegments = pathname
-      .split("/")
-      .filter((segment) => segment !== "" && segment !== "app");
-
-    if (pathSegments.length === 0) return null;
-
-    return pathSegments.map((segment, index) => {
-      // Reconstruct href while filtering out "app" from the path
-      const href = "/" + pathSegments.slice(0, index + 1).join("/");
-      const isLast = index === pathSegments.length - 1;
-      const formattedName = formatSegmentName(segment);
-
-      return (
-        <BreadcrumbItem key={href}>
-          {!isLast ? (
-            <>
-              <BreadcrumbLink asChild>
-                <Link href={href}>{formattedName}</Link>
-              </BreadcrumbLink>
-              <BreadcrumbSeparator />
-            </>
-          ) : (
-            <BreadcrumbPage>{formattedName}</BreadcrumbPage>
-          )}
-        </BreadcrumbItem>
-      );
-    });
-  };
+  const [breadcrumbItems, setBreadcrumbItems] = useState([]);
 
   // Format segment names to be more readable
   const formatSegmentName = (segment) => {
@@ -53,22 +24,74 @@ export function SystemBreadcrumb() {
       .join(" ");
   };
 
-  // Don't render breadcrumb if we're only on home or app page
-  if (pathname === "/" || pathname === "/app") {
+  useEffect(() => {
+    // Don't render breadcrumb if we're only on home or app page
+    if (pathname === "/" || pathname === "/app") {
+      setBreadcrumbItems([]);
+      return;
+    }
+
+    const pathSegments = pathname
+      .split("/")
+      .filter((segment) => segment !== "" && segment !== "app");
+
+    if (pathSegments.length === 0) {
+      setBreadcrumbItems([]);
+      return;
+    }
+
+    const items = [];
+
+    // Add Home breadcrumb
+    items.push(
+      <BreadcrumbItem key="home">
+        <BreadcrumbLink asChild>
+          <Link href="/">Home</Link>
+        </BreadcrumbLink>
+      </BreadcrumbItem>
+    );
+
+    // Add separator if there are additional segments
+    if (pathSegments.length > 0) {
+      items.push(<BreadcrumbSeparator key="sep-home" />);
+    }
+
+    // Generate breadcrumb items
+    pathSegments.forEach((segment, index) => {
+      const href = "/" + pathSegments.slice(0, index + 1).join("/");
+      const isLast = index === pathSegments.length - 1;
+      const formattedName = formatSegmentName(segment);
+
+      // Add the breadcrumb item
+      items.push(
+        <BreadcrumbItem key={href}>
+          {!isLast ? (
+            <BreadcrumbLink asChild>
+              <Link href={href}>{formattedName}</Link>
+            </BreadcrumbLink>
+          ) : (
+            <BreadcrumbPage>{formattedName}</BreadcrumbPage>
+          )}
+        </BreadcrumbItem>
+      );
+
+      // Add separator if not the last item
+      if (!isLast) {
+        items.push(<BreadcrumbSeparator key={`sep-${href}`} />);
+      }
+    });
+
+    setBreadcrumbItems(items);
+  }, [pathname]);
+
+  // Don't render anything if no breadcrumb items
+  if (breadcrumbItems.length === 0) {
     return null;
   }
 
   return (
     <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link href="/">Home</Link>
-          </BreadcrumbLink>
-          {pathname !== "/" && <BreadcrumbSeparator />}
-        </BreadcrumbItem>
-        {generateBreadcrumbItems()}
-      </BreadcrumbList>
+      <BreadcrumbList>{breadcrumbItems}</BreadcrumbList>
     </Breadcrumb>
   );
 }
