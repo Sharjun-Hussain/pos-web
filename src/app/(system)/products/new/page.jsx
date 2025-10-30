@@ -29,3 +29,8 @@ export default function AddProductPage() {
     </div>
   );
 }
+
+export const metadata = {
+  title: "Add New Product  | EMI-POS",
+  description: "Developed By : Inzeedo (PVT) Ltd.",
+};

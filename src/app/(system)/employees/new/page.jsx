@@ -20,9 +20,17 @@ export default function AddEmployeePage() {
           <h2 className="text-3xl font-bold tracking-tight">
             Add New Employee
           </h2>
+          <p className="text-muted-foreground">
+            Fill in the details below to add a new employee to your application.
+          </p>
         </div>
       </div>
       <EmployeeForm />
     </div>
   );
 }
+
+export const metadata = {
+  title: "Add New Employee | EMI-POS",
+  description: "Developed By : Inzeedo (PVT) Ltd.",
+};

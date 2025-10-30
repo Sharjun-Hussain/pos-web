@@ -9,4 +9,5 @@ export default page;
 
 export const metadata = {
   title: "Products Inventory | EMI-POS",
+  description: "Developed By : Inzeedo (PVT) Ltd.",
 };
