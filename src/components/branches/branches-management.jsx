@@ -1,3 +1,4 @@
+// BranchesPage.jsx (Corrected)
 "use client";
 
 import { useState } from "react";
@@ -18,17 +19,38 @@ import {
   MapPin,
 } from "lucide-react";
 import Link from "next/link";
-import { columns } from "./branches-column";
+import { columns } from "./branches-column"; // Make sure this path is correct
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DataTable } from "../general/data-table";
+import { DataTable } from "../general/data-table"; // Make sure this path is correct
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-// Mock Data for Branches
+// --- 1. Import React Table hooks ---
+import {
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  getFacetedRowModel, // Needed for selection count
+  getFacetedUniqueValues, // Needed for selection count
+  useReactTable,
+} from "@tanstack/react-table";
+
+// Mock Data for Branches (Same as before)
 const mockBranches = [
+  // ... your branch data
   {
     id: "branch_1",
     name: "Headquarters",
@@ -71,13 +93,57 @@ const mockBranches = [
   },
 ];
 
-// Calculated Statistics for Branches
+// Calculated Statistics for Branches (Same as before)
 const branchStats = {
+  // ... your stats
   totalBranches: mockBranches.length,
   activeBranches: mockBranches.filter((branch) => branch.status === "active")
     .length,
   totalStaff: mockBranches.reduce((acc, branch) => acc + branch.staffCount, 0),
   locations: new Set(mockBranches.map((branch) => branch.location.city)).size,
+};
+
+const BranchTableToolbar = ({ table, bulkActionsComponent }) => {
+  const numSelected = table.getFilteredSelectedRowModel().rows.length;
+
+  return (
+    <div className="flex items-center justify-between space-x-4 mb-4">
+      <div className="flex flex-1 items-center space-x-2">
+        {/* Filter by Name (Search Input) */}
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Filter branches by name..."
+            value={table.getColumn("name")?.getFilterValue() ?? ""}
+            onChange={(event) =>
+              table.getColumn("name")?.setFilterValue(event.target.value)
+            }
+            className="pl-10"
+          />
+        </div>
+
+        {/* Filter by Status */}
+        <Select
+          value={table.getColumn("status")?.getFilterValue() ?? ""}
+          onValueChange={(value) => {
+            table.getColumn("status")?.setFilterValue(value || undefined);
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={undefined}>All Statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Show bulk actions only if rows are selected */}
+      {numSelected > 0 && bulkActionsComponent}
+    </div>
+  );
 };
 
 const BranchBulkActions = ({ table }) => {
@@ -104,13 +170,41 @@ const BranchBulkActions = ({ table }) => {
   );
 };
 
-export default function BranchesPage() {
+export default function BranchesManagement() {
   const [isNavigating, setIsNavigating] = useState(false);
+
+  // --- 3. Add Table State (like in ProductsPage) ---
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [rowSelection, setRowSelection] = useState({});
+
+  const data = mockBranches;
+
+  // --- 4. Create the 'table' instance (like in ProductsPage) ---
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getFacetedRowModel: getFacetedRowModel(), // Needed for getFilteredSelectedRowModel
+    getFacetedUniqueValues: getFacetedUniqueValues(), // Needed for getFilteredSelectedRowModel
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      rowSelection,
+    },
+  });
 
   return (
     <div className="hidden h-full flex-1 flex-col space-y-6 p-6 md:flex">
-      {/* Header Section */}
+      {/* Header Section (Same as before) */}
       <div className="flex items-center justify-between">
+        {/* ... header content ... */}
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">
             Branch Management
@@ -141,8 +235,9 @@ export default function BranchesPage() {
         </div>
       </div>
 
-      {/* Statistics Cards */}
+      {/* Statistics Cards (Same as before) */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* ... card content ... */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -199,9 +294,10 @@ export default function BranchesPage() {
         </Card>
       </div>
 
-      {/* Branches Table Section */}
+      {/* Branches Table Section (Corrected) */}
       <Card>
         <CardHeader>
+          {/* ... header content ... */}
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>All Branches</CardTitle>
@@ -215,13 +311,14 @@ export default function BranchesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <DataTable
-            data={mockBranches}
-            columns={columns}
-            filterColumnId="name" // Filter by "name" column
-            filterPlaceholder="Filter branches by name..." // New placeholder
-            bulkActionsComponent={<BranchBulkActions />} // New bulk actions
+          {/* --- 5. Use the new Toolbar and pass the 'table' instance --- */}
+          <BranchTableToolbar
+            table={table}
+            bulkActionsComponent={<BranchBulkActions table={table} />}
           />
+
+          {/* --- 6. Pass the 'table' instance to DataTable --- */}
+          <DataTable table={table} columns={columns} />
         </CardContent>
       </Card>
     </div>
