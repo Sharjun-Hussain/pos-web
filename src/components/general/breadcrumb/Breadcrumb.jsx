@@ -26,14 +26,14 @@ export function SystemBreadcrumb() {
 
   useEffect(() => {
     // Don't render breadcrumb if we're only on home or app page
-    if (pathname === "/" || pathname === "/app") {
+    if (pathname === "/" || pathname === "/pos") {
       setBreadcrumbItems([]);
       return;
     }
 
     const pathSegments = pathname
       .split("/")
-      .filter((segment) => segment !== "" && segment !== "app");
+      .filter((segment) => segment !== "" && segment !== "pos");
 
     if (pathSegments.length === 0) {
       setBreadcrumbItems([]);

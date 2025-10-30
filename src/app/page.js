@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
-const page = () =>  redirect('/app')
+const page = () =>  redirect('/pos')
 
 export default page

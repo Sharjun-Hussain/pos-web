@@ -5,11 +5,13 @@ import {
   AudioWaveform,
   BookOpen,
   Bot,
+  ChartPie,
   Command,
   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
+  Settings,
   Settings2,
   SquareTerminal,
 } from "lucide-react";
@@ -89,6 +91,38 @@ const data = {
         {
           title: "Unit Container",
           url: "#",
+        },
+      ],
+    },
+    {
+      title: "Products",
+      url: "#",
+      icon: Settings,
+      items: [
+        {
+          title: "Product List",
+          url: "products",
+        },
+
+        {
+          title: "Inventory / Stock",
+          url: "products/inventory",
+        },
+      ],
+    },
+    {
+      title: "Analytics",
+      url: "#",
+      icon: ChartPie,
+      items: [
+        {
+          title: "Sales Reports",
+          url: "analytics/sales-reports",
+        },
+
+        {
+          title: "Inventory Reports",
+          url: "analytics/inventory-reports",
         },
       ],
     },
