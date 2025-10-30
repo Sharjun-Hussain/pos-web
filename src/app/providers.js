@@ -6,7 +6,7 @@ export default function Providers({ children }) {
   return <SessionProvider>
     <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="light"
             enableSystem
             disableTransitionOnChange
           >
