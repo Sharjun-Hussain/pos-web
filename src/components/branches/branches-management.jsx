@@ -236,68 +236,60 @@ export default function BranchesManagement() {
       </div>
 
       {/* Statistics Cards (Same as before) */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* ... card content ... */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="p-3">
+          <CardHeader className="flex flex-row items-center justify-between p-0 space-y-0">
+            <CardTitle className="text-xs font-medium">
               Total Branches
             </CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <Building2 className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {branchStats.totalBranches}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Across all locations
-            </p>
+          <CardContent className="p-0 pt-2">
+            <div className="text-xl font-bold">{branchStats.totalBranches}</div>
+            <p className="text-xs text-muted-foreground">All locations</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+
+        <Card className="p-3">
+          <CardHeader className="flex flex-row items-center justify-between p-0 space-y-0">
+            <CardTitle className="text-xs font-medium">
               Active Branches
             </CardTitle>
-            <Building2 className="h-4 w-4 text-primary" />
+            <Building2 className="h-3 w-3 text-primary" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+          <CardContent className="p-0 pt-2">
+            <div className="text-xl font-bold text-green-600">
               {branchStats.activeBranches}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Currently operational
-            </p>
+            <p className="text-xs text-muted-foreground">Operational</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Staff</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
+
+        <Card className="p-3">
+          <CardHeader className="flex flex-row items-center justify-between p-0 space-y-0">
+            <CardTitle className="text-xs font-medium">Total Staff</CardTitle>
+            <User className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{branchStats.totalStaff}</div>
-            <p className="text-xs text-muted-foreground">
-              Employees across all branches
-            </p>
+          <CardContent className="p-0 pt-2">
+            <div className="text-xl font-bold">{branchStats.totalStaff}</div>
+            <p className="text-xs text-muted-foreground">All employees</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Locations</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
+
+        <Card className="p-3">
+          <CardHeader className="flex flex-row items-center justify-between p-0 space-y-0">
+            <CardTitle className="text-xs font-medium">Locations</CardTitle>
+            <MapPin className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{branchStats.locations}</div>
-            <p className="text-xs text-muted-foreground">Unique cities</p>
+          <CardContent className="p-0 pt-2">
+            <div className="text-xl font-bold">{branchStats.locations}</div>
+            <p className="text-xs text-muted-foreground">Cities</p>
           </CardContent>
         </Card>
       </div>
-
       {/* Branches Table Section (Corrected) */}
       <Card>
         <CardHeader>
-          {/* ... header content ... */}
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>All Branches</CardTitle>
@@ -311,13 +303,11 @@ export default function BranchesManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* --- 5. Use the new Toolbar and pass the 'table' instance --- */}
           <BranchTableToolbar
             table={table}
             bulkActionsComponent={<BranchBulkActions table={table} />}
           />
 
-          {/* --- 6. Pass the 'table' instance to DataTable --- */}
           <DataTable table={table} columns={columns} />
         </CardContent>
       </Card>

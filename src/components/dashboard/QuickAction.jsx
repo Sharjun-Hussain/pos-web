@@ -22,13 +22,13 @@ const quickActions = [
     href: "/pos", // Added href for navigation
   },
   {
-    id: "invoices",
-    name: "Invoices",
-    icon: FileText,
-    description: "Create and manage invoices",
+    id: "reports",
+    name: "Reports",
+    icon: BarChart3,
+    description: "Analytics & insights",
     color: "bg-blue-500",
     soon: false,
-    href: "/invoices", // Added href for navigation
+    href: "/reports", // Added href for navigation
   },
   {
     id: "inventory",
@@ -37,7 +37,7 @@ const quickActions = [
     description: "Manage stock and products",
     color: "bg-orange-500",
     soon: false,
-    href: "/inventory", // Added href for navigation
+    href: "/products", // Added href for navigation
   },
   {
     id: "customers",
@@ -49,13 +49,13 @@ const quickActions = [
     href: "/customers", // Added href for navigation
   },
   {
-    id: "reports",
-    name: "Reports",
-    icon: BarChart3,
+    id: "employee",
+    name: "Employee",
+    icon: Users,
     description: "Analytics & insights",
     color: "bg-indigo-500",
     soon: false,
-    href: "/reports", // Added href for navigation
+    href: "/employee", // Added href for navigation
   },
   {
     id: "barcodes",

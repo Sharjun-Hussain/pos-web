@@ -101,7 +101,7 @@ const data = {
       items: [
         {
           title: "Product List",
-          url: "products",
+          url: "/products",
         },
 
         {
@@ -127,14 +127,14 @@ const data = {
       ],
     },
   ],
-  projects: [
+  Core: [
     {
-      name: "Design Engineering",
-      url: "#",
+      name: "Employees",
+      url: "/employees",
       icon: Frame,
     },
     {
-      name: "Sales & Marketing",
+      name: "Customers",
       url: "#",
       icon: PieChart,
     },
@@ -154,7 +154,7 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavProjects projects={data.projects} /> */}
+        <NavProjects projects={data.Core} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
