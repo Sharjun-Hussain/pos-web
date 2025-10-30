@@ -50,7 +50,7 @@ const data = {
       items: [
         {
           title: "Main Category",
-          url: "main-category",
+          url: "/main-category",
         },
         {
           title: "Sub Category",
@@ -62,7 +62,7 @@ const data = {
         },
         {
           title: "Branch",
-          url: "branches",
+          url: "/branches",
         },
         {
           title: "Supplier",
@@ -106,7 +106,7 @@ const data = {
 
         {
           title: "Inventory / Stock",
-          url: "products/inventory",
+          url: "/products/inventory",
         },
       ],
     },
@@ -117,12 +117,12 @@ const data = {
       items: [
         {
           title: "Sales Reports",
-          url: "analytics/sales-reports",
+          url: "/analytics/sales-reports",
         },
 
         {
           title: "Inventory Reports",
-          url: "analytics/inventory-reports",
+          url: "/analytics/inventory-reports",
         },
       ],
     },
@@ -137,11 +137,6 @@ const data = {
       name: "Customers",
       url: "#",
       icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
     },
   ],
 };
