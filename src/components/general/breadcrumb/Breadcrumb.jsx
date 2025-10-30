@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { usePathname } from "next/navigation";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function SystemBreadcrumb() {
   const pathname = usePathname();
@@ -91,7 +92,11 @@ export function SystemBreadcrumb() {
 
   return (
     <Breadcrumb>
-      <BreadcrumbList>{breadcrumbItems}</BreadcrumbList>
+      <div className="flex gap-3 items-center">
+        {" "}
+        <SidebarTrigger />
+        <BreadcrumbList>{breadcrumbItems}</BreadcrumbList>
+      </div>
     </Breadcrumb>
   );
 }
