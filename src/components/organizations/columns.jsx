@@ -22,7 +22,7 @@ const DataTableColumnHeader = ({ column, title }) => {
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >
       {title}
-      <ArrowUpDown className="ml-2 h-1 w-1 text-gray-700 opacity-60" />
+      <ArrowUpDown className="ml-2 h-4 w-4 text-gray-700 opacity-60" />
     </Button>
   );
 };
@@ -57,10 +57,14 @@ export const columns = [
     ),
     cell: ({ row }) => {
       const organization = row.original;
+      const logoUrl = organization.logo
+        ? `https://apipos.inzeedo.com/${organization.logo}`
+        : null;
+
       return (
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarImage src={organization.logo} alt={organization.name} />
+            <AvatarImage src={logoUrl} alt={organization.name} />
             <AvatarFallback>
               <Building className="h-5 w-5 text-muted-foreground" />
             </AvatarFallback>
@@ -68,57 +72,63 @@ export const columns = [
           <div>
             <div className="font-medium">{organization.name}</div>
             <div className="text-sm text-muted-foreground">
-              {organization.owner_email}
+              {organization.email || "No email"}
             </div>
           </div>
         </div>
       );
     },
   },
-  {
-    accessorKey: "code",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Org Code" />
-    ),
-    cell: ({ row }) => {
-      return <Badge variant="outline">{row.getValue("code")}</Badge>;
-    },
-  },
-  {
-    accessorKey: "subscription_plan",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Plan" />
-    ),
-    cell: ({ row }) => {
-      const plan = row.getValue("subscription_plan");
-      let variant = "outline";
-      if (plan === "Pro") variant = "default";
-      if (plan === "Enterprise") variant = "secondary";
-
-      return <Badge variant={variant}>{plan}</Badge>;
-    },
-  },
+  // {
+  //   accessorKey: "code",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Org Code" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     return <Badge variant="outline">{row.getValue("code")}</Badge>;
+  //   },
+  // },
   {
     accessorKey: "city",
-    header: "City",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="City" />
+    ),
+    cell: ({ row }) => {
+      const city = row.getValue("city");
+      return city || "Not specified";
+    },
   },
   {
     accessorKey: "is_multi_branch",
     header: "Multi-Branch",
     cell: ({ row }) => {
-      return row.getValue("is_multi_branch") ? "Yes" : "No";
+      return row.getValue("is_multi_branch") ? (
+        <Badge variant="default">Yes</Badge>
+      ) : (
+        <Badge variant="destructive">No</Badge>
+      );
     },
   },
   {
-    accessorKey: "status",
+    accessorKey: "is_active",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status;
+      const isActive = row.getValue("is_active");
       return (
-        <Badge variant={status === "active" ? "default" : "destructive"}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
+        <Badge variant={isActive ? "default" : "destructive"}>
+          {isActive ? "Active" : "Inactive"}
         </Badge>
       );
+    },
+  },
+  {
+    accessorKey: "created_at",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Created At" />
+    ),
+    cell: ({ row }) => {
+      const date = new Date(row.getValue("created_at"));
+      return date.toLocaleDateString();
     },
   },
   {
@@ -143,7 +153,7 @@ export const columns = [
             </Link>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-red-500">
-              Suspend
+              {organization.is_active ? "Suspend" : "Activate"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

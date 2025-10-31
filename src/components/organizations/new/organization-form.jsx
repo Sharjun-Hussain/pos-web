@@ -3,8 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Building } from "lucide-react"; // 1. CHANGED: Icon
-import { useState } from "react"; // Required for image preview state
+import { Building } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation"; // CHANGED: For navigation on success
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = [
@@ -37,7 +39,8 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/webp",
 ];
 
-const formSchema = z.object({
+// CHANGED: Exporting schema for type inference
+export const formSchema = z.object({
   logo: z
     .instanceof(File)
     .optional()
@@ -78,9 +81,14 @@ const statuses = [
 ];
 
 export function OrganizationForm() {
+  // CHANGED: Add loading state
+  const [isLoading, setIsLoading] = useState(false);
+
+  // CHANGED: Initialize router and toast
+  const router = useRouter();
+
   const form = useForm({
     resolver: zodResolver(formSchema),
-
     defaultValues: {
       logo: undefined,
       name: "",
@@ -96,9 +104,62 @@ export function OrganizationForm() {
   const logo = form.watch("logo");
   const previewUrl = logo ? URL.createObjectURL(logo) : null;
 
-  function onSubmit(data) {
-    console.log("Organization data submitted:", data);
-    alert("Organization saved! Check the console for the data.");
+  // CHANGED: Updated onSubmit function to call the API
+  async function onSubmit(data) {
+    setIsLoading(true); // 1. Disable buttons immediately
+
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("code", data.code);
+    formData.append("owner_email", data.owner_email);
+    formData.append("city", data.city);
+    formData.append("subscription_plan", data.subscription_plan);
+    formData.append("status", data.status);
+    formData.append("is_multi_branch", data.is_multi_branch ? "1" : "0");
+    if (data.logo) {
+      formData.append("logo", data.logo);
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            // "Authorization": "Bearer YOUR_API_TOKEN",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create organization.");
+      }
+
+      const result = await response.json();
+      console.log("Organization created:", result);
+
+      // SUCCESS:
+      toast.success("Success!", "Organization created successfully.");
+
+      // Wait 1s, then navigate. The buttons will remain
+      // disabled this whole time, which is good UX.
+      setTimeout(() => {
+        router.back();
+      }, 1000);
+
+      // Note: We DO NOT call setIsLoading(false) here.
+    } catch (error) {
+      // ERROR:
+      console.error("Submission error:", error);
+      toast.error(error.message || "Failed to create organization.");
+
+      // Only set loading to false if there's an error,
+      // so the user can try again.
+      setIsLoading(false);
+    }
+    // We remove the `finally` block entirely.
   }
 
   return (
@@ -106,10 +167,11 @@ export function OrganizationForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* --- Organization Information Section --- */}
+            {/* ... (The rest of your form fields remain unchanged) ... */}
+
             <div>
               <h3 className="text-lg font-medium mb-4">Organization Details</h3>
-              {/* 6. CHANGED: Field for Logo */}
+
               <FormField
                 control={form.control}
                 name="logo"
@@ -146,7 +208,6 @@ export function OrganizationForm() {
                 )}
               />
 
-              {/* 7. CHANGED: Grid for org details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <FormField
                   control={form.control}
@@ -302,11 +363,14 @@ export function OrganizationForm() {
               </div>
             </div>
 
+            {/* CHANGED: Disable buttons and show loading text on submit */}
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost">
+              <Button type="button" variant="ghost" disabled={isLoading}>
                 Cancel
               </Button>
-              <Button type="submit">Save Organization</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? "Saving..." : "Save Organization"}
+              </Button>
             </div>
           </form>
         </Form>

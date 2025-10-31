@@ -1,7 +1,6 @@
-"use client";
+"use client"; // Required for useState
 
-import { useState } from "react";
-import { columns } from "@/components/organizations/columns"; // 1. CHANGED
+import { useState, useEffect } from "react";
 import { DataTable } from "@/components/general/data-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +17,11 @@ import {
   Download,
   Filter,
   Loader2,
-  Building, // 2. CHANGED
-  ShieldCheck,
-  Package,
+  Users,
+  UserCheck,
+  UserX,
+  Briefcase,
+  Building,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -43,54 +44,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { columns } from "./columns";
 
-// 3. CHANGED: Mock data for organizations
-const mockOrganizations = [
-  {
-    id: "org_1",
-    name: "Demo Inc.",
-    code: "ABCD004",
-    city: "Sainthamaruthu",
-    is_multi_branch: true,
-    logo: "https://via.placeholder.com/40",
-    status: "active",
-    subscription_plan: "Pro",
-    owner_email: "admin@demo.com",
-  },
-  {
-    id: "org_2",
-    name: "Alpha Widgets",
-    code: "ALPH001",
-    city: "Metropolis",
-    is_multi_branch: false,
-    logo: "https://via.placeholder.com/40",
-    status: "active",
-    subscription_plan: "Basic",
-    owner_email: "ceo@alpha.com",
-  },
-  {
-    id: "org_3",
-    name: "NextGen Solutions",
-    code: "NEXT002",
-    city: "Gotham",
-    is_multi_branch: true,
-    logo: "https://via.placeholder.com/40",
-    status: "suspended",
-    subscription_plan: "Enterprise",
-    owner_email: "ops@nextgen.com",
-  },
-];
-
-// 4. CHANGED: Bulk actions for organizations
 const OrganizationBulkActions = ({ table }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
   const selectedRows = table.getFilteredSelectedRowModel().rows;
 
-  const handleSuspend = () => {
+  const handleDeactivate = () => {
     const selectedIds = selectedRows.map((row) => row.original.id);
-    console.log("Suspending organizations:", selectedIds);
+    console.log("Deactivating organizations:", selectedIds);
     // Add your API call logic here
-    table.resetRowSelection();
+    table.resetRowSelection(); // Clear selection after action
   };
 
   const handleDelete = () => {
@@ -108,8 +72,8 @@ const OrganizationBulkActions = ({ table }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleSuspend}>
-          Suspend Selected
+        <DropdownMenuItem onClick={handleDeactivate}>
+          Deactivate Selected
         </DropdownMenuItem>
         <DropdownMenuItem className="text-red-500" onClick={handleDelete}>
           Delete Selected
@@ -119,13 +83,13 @@ const OrganizationBulkActions = ({ table }) => {
   );
 };
 
-// 5. CHANGED: Toolbar for organizations
 const OrganizationTableToolbar = ({ table, bulkActionsComponent }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
 
   return (
     <div className="flex items-center justify-between space-x-4 mb-4">
       <div className="flex flex-1 items-center space-x-2">
+        {/* Filter by Name (Search Input) */}
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -138,29 +102,32 @@ const OrganizationTableToolbar = ({ table, bulkActionsComponent }) => {
           />
         </div>
 
-        <Select
-          value={table.getColumn("subscription_plan")?.getFilterValue() ?? ""}
+        {/* Filter by Multi-Branch Status */}
+        {/* <Select
+          value={table.getColumn("is_multi_branch")?.getFilterValue() ?? ""}
           onValueChange={(value) => {
             table
-              .getColumn("subscription_plan")
-              ?.setFilterValue(value || undefined);
+              .getColumn("is_multi_branch")
+              ?.setFilterValue(value === "" ? undefined : value === "true");
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by plan" />
+            <SelectValue placeholder="Multi-Branch" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={undefined}>All Plans</SelectItem>
-            <SelectItem value="Basic">Basic</SelectItem>
-            <SelectItem value="Pro">Pro</SelectItem>
-            <SelectItem value="Enterprise">Enterprise</SelectItem>
+            <SelectItem value={undefined}>All Types</SelectItem>
+            <SelectItem value="true">Multi-Branch</SelectItem>
+            <SelectItem value="false">Single Branch</SelectItem>
           </SelectContent>
-        </Select>
+        </Select> */}
 
-        <Select
-          value={table.getColumn("status")?.getFilterValue() ?? ""}
+        {/* Filter by Status */}
+        {/* <Select
+          value={table.getColumn("is_active")?.getFilterValue() ?? ""}
           onValueChange={(value) => {
-            table.getColumn("status")?.setFilterValue(value || undefined);
+            table
+              .getColumn("is_active")
+              ?.setFilterValue(value === "" ? undefined : value === "true");
           }}
         >
           <SelectTrigger className="w-[180px]">
@@ -168,10 +135,10 @@ const OrganizationTableToolbar = ({ table, bulkActionsComponent }) => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={undefined}>All Statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="suspended">Suspended</SelectItem>
+            <SelectItem value="true">Active</SelectItem>
+            <SelectItem value="false">Inactive</SelectItem>
           </SelectContent>
-        </Select>
+        </Select> */}
       </div>
 
       {numSelected > 0 && bulkActionsComponent}
@@ -179,17 +146,71 @@ const OrganizationTableToolbar = ({ table, bulkActionsComponent }) => {
   );
 };
 
-// 6. CHANGED: Main page component
-export default function OrganizationsPage() {
+// Statistics for organizations
+const calculateOrganizationStats = (organizations) => ({
+  totalOrganizations: organizations.length,
+  activeOrganizations: organizations.filter((org) => org.is_active).length,
+  inactiveOrganizations: organizations.filter((org) => !org.is_active).length,
+  multiBranchOrganizations: organizations.filter((org) => org.is_multi_branch)
+    .length,
+});
+
+// Main page component
+export default function OrganizationPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
+  const [organizations, setOrganizations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const data = mockOrganizations;
+  // API fetch function
+  const fetchOrganizations = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(
+        "https://apipos.inzeedo.com/api/v1/organizations",
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            // Add any required authentication headers here
+            // 'Authorization': `Bearer ${yourToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch organizations: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        setOrganizations(data.data.data);
+      } else {
+        throw new Error(data.message || "Failed to fetch organizations");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching organizations:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  const organizationStats = calculateOrganizationStats(organizations);
 
   const table = useReactTable({
-    data,
+    data: organizations,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -205,15 +226,40 @@ export default function OrganizationsPage() {
     },
   });
 
+  if (loading) {
+    return (
+      <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading organizations...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Error: {error}</p>
+            <Button onClick={fetchOrganizations}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
+      {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">
             Organization Management
           </h1>
           <p className="text-muted-foreground">
-            Manage all organizations on your platform.
+            Manage your organizations, branches, and settings.
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -238,9 +284,76 @@ export default function OrganizationsPage() {
         </div>
       </div>
 
+      {/* Statistics Cards */}
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Organizations
+                </p>
+                <p className="text-2xl font-bold">
+                  {organizationStats.totalOrganizations}
+                </p>
+              </div>
+              <Building className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Organizations
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {organizationStats.activeOrganizations}
+                </p>
+              </div>
+              <UserCheck className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Multi-Branch
+                </p>
+                <p className="text-2xl font-bold">
+                  {organizationStats.multiBranchOrganizations}
+                </p>
+              </div>
+              <Briefcase className="h-8 w-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Inactive
+                </p>
+                <p className="text-2xl font-bold text-red-600">
+                  {organizationStats.inactiveOrganizations}
+                </p>
+              </div>
+              <UserX className="h-8 w-8 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div> */}
+
+      {/* Organizations Table Section */}
       <Card>
-        {/* As per your last example, the CardHeader is omitted */}
-        <CardContent>
+        <CardContent className="">
           <OrganizationTableToolbar
             table={table}
             bulkActionsComponent={<OrganizationBulkActions table={table} />}
