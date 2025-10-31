@@ -1,7 +1,7 @@
-// BranchesPage.jsx (Corrected)
 "use client";
 
-import { useState } from "react";
+// --- 1. Import hooks ---
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,24 +10,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+// --- 2. Import shadcn/ui Table components ---
 import {
-  PlusCircle,
-  Download,
-  Loader2,
-  Building2,
-  User,
-  MapPin,
-} from "lucide-react";
-import Link from "next/link";
-import { columns } from "./branches-column"; // Make sure this path is correct
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DataTable } from "../general/data-table"; // Make sure this path is correct
-import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -37,72 +37,241 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// --- 1. Import React Table hooks ---
+// --- 3. Import lucide-react icons ---
 import {
+  PlusCircle,
+  Download,
+  Loader2,
+  Building2,
+  User,
+  MapPin,
+  LoaderIcon,
+  Search,
+  MoreHorizontal,
+  ArrowUpDown,
+} from "lucide-react";
+
+// --- 4. Import @tanstack/react-table ---
+import {
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  getFacetedRowModel, // Needed for selection count
-  getFacetedUniqueValues, // Needed for selection count
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   useReactTable,
 } from "@tanstack/react-table";
 
-// Mock Data for Branches (Same as before)
-const mockBranches = [
-  // ... your branch data
+// --- 5. Define columns in-file ---
+export const columns = [
   {
-    id: "branch_1",
-    name: "Headquarters",
-    location: { city: "Frankfurt", country: "Germany" },
-    manager: "Alice Johnson",
-    staffCount: 35,
-    status: "active",
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
   },
   {
-    id: "branch_2",
-    name: "Westside Hub",
-    location: { city: "Berlin", country: "Germany" },
-    manager: "Bob Williams",
-    staffCount: 18,
-    status: "active",
+    accessorKey: "name",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Branch Name
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => (
+      <div className="font-medium">{row.getValue("name")}</div>
+    ),
   },
   {
-    id: "branch_3",
-    name: "Innovation Center",
-    location: { city: "Munich", country: "Germany" },
-    manager: "Charlie Brown",
-    staffCount: 22,
-    status: "active",
+    accessorKey: "organization",
+    header: "Organization",
+    cell: ({ row }) => {
+      // Assuming branch.organization.name exists
+      const organization = row.original.organization;
+      return <div>{organization?.name || "N/A"}</div>;
+    },
   },
   {
-    id: "branch_4",
-    name: "Logistics Dept.",
-    location: { city: "Hamburg", country: "Germany" },
-    manager: "Diana Prince",
-    staffCount: 12,
-    status: "inactive",
+    accessorKey: "location",
+    header: "Location",
+    cell: ({ row }) => {
+      // Assuming branch.location.city exists
+      const location = row.original.location;
+      return <div>{location?.city || "N/A"}</div>;
+    },
   },
   {
-    id: "branch_5",
-    name: "Paris Office",
-    location: { city: "Paris", country: "France" },
-    manager: "Eve Adams",
-    staffCount: 15,
-    status: "active",
+    accessorKey: "staff_count",
+    header: "Staff",
+    cell: ({ row }) => <div>{row.getValue("staff_count") || 0}</div>,
+  },
+  {
+    accessorKey: "is_active",
+    header: "Status",
+    cell: ({ row }) => {
+      const isActive = row.getValue("is_active");
+      return (
+        <Badge variant={isActive ? "default" : "outline"}>
+          {isActive ? "Active" : "Inactive"}
+        </Badge>
+      );
+    },
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const branch = row.original;
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(branch.id)}
+            >
+              Copy branch ID
+            </DropdownMenuItem>
+            <DropdownMenuItem>Edit Branch</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-500">
+              Delete Branch
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ];
 
-// Calculated Statistics for Branches (Same as before)
-const branchStats = {
-  // ... your stats
-  totalBranches: mockBranches.length,
-  activeBranches: mockBranches.filter((branch) => branch.status === "active")
-    .length,
-  totalStaff: mockBranches.reduce((acc, branch) => acc + branch.staffCount, 0),
-  locations: new Set(mockBranches.map((branch) => branch.location.city)).size,
+// --- 6. Define DataTable component in-file ---
+function DataTable({ table, columns }) {
+  return (
+    <div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// --- 7. Create a function to calculate stats ---
+const calculateBranchStats = (branches) => {
+  if (!branches || branches.length === 0) {
+    return {
+      totalBranches: 0,
+      activeBranches: 0,
+      totalStaff: 0,
+      locations: 0,
+    };
+  }
+
+  return {
+    totalBranches: branches.length,
+    activeBranches: branches.filter((branch) => branch.is_active).length,
+    totalStaff: branches.reduce(
+      (acc, branch) => acc + (branch.staff_count || 0),
+      0
+    ),
+    locations: new Set(
+      branches.map((branch) => branch.location?.city).filter(Boolean)
+    ).size,
+  };
 };
 
+// --- 8. BranchTableToolbar component ---
 const BranchTableToolbar = ({ table, bulkActionsComponent }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
 
@@ -124,33 +293,42 @@ const BranchTableToolbar = ({ table, bulkActionsComponent }) => {
 
         {/* Filter by Status */}
         <Select
-          value={table.getColumn("status")?.getFilterValue() ?? ""}
+          value={
+            table.getColumn("is_active")?.getFilterValue() === undefined
+              ? ""
+              : String(table.getColumn("is_active")?.getFilterValue())
+          }
           onValueChange={(value) => {
-            table.getColumn("status")?.setFilterValue(value || undefined);
+            table
+              .getColumn("is_active")
+              ?.setFilterValue(value === "" ? undefined : value === "true");
           }}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={undefined}>All Statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="true">Active</SelectItem>
+            <SelectItem value="false">Inactive</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Show bulk actions only if rows are selected */}
       {numSelected > 0 && bulkActionsComponent}
     </div>
   );
 };
 
+// --- 9. BranchBulkActions component ---
 const BranchBulkActions = ({ table }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
 
   const handleDeactivate = () => {
-    console.log("Deactivating selected branches...");
+    const selectedIds = selectedRows.map((row) => row.original.id);
+    console.log("Deactivating selected branches:", selectedIds);
+    // Add your API call logic here
     table.resetRowSelection();
   };
 
@@ -170,26 +348,69 @@ const BranchBulkActions = ({ table }) => {
   );
 };
 
+// --- 10. Main BranchesManagement component ---
 export default function BranchesManagement() {
-  const [isNavigating, setIsNavigating] = useState(false);
+  // Remove isNavigating state, as it's not used with <a> tag
+  // const [isNavigating, setIsNavigating] = useState(false);
 
-  // --- 3. Add Table State (like in ProductsPage) ---
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [rowSelection, setRowSelection] = useState({});
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const data = mockBranches;
+  const fetchBranches = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  // --- 4. Create the 'table' instance (like in ProductsPage) ---
+      const response = await fetch(
+        "https://apipos.inzeedo.com/api/v1/branches",
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            // 'Authorization': `Bearer ${yourToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch branches: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        setBranches(data.data.data);
+      } else {
+        throw new Error(data.message || "Failed to fetch branches");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching branches:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBranches();
+  }, []);
+
+  const branchStats = calculateBranchStats(branches);
+
   const table = useReactTable({
-    data,
+    data: branches,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getFacetedRowModel: getFacetedRowModel(), // Needed for getFilteredSelectedRowModel
-    getFacetedUniqueValues: getFacetedUniqueValues(), // Needed for getFilteredSelectedRowModel
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: getFacetedUniqueValues(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
@@ -200,11 +421,34 @@ export default function BranchesManagement() {
     },
   });
 
+  if (loading) {
+    return (
+      <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
+        <div className="flex items-center justify-center h-64">
+          <LoaderIcon className="h-4 w-4 animate-spin" />
+          <span className="ml-2">Loading branches...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Error: {error}</p>
+            <Button onClick={fetchBranches}>Retry</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="hidden h-full flex-1 flex-col space-y-6 p-6 md:flex">
-      {/* Header Section (Same as before) */}
+      {/* Header Section */}
       <div className="flex items-center justify-between">
-        {/* ... header content ... */}
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">
             Branch Management
@@ -218,24 +462,17 @@ export default function BranchesManagement() {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Link href="/branches/new" passHref>
-            <Button
-              onClick={() => setIsNavigating(true)}
-              disabled={isNavigating}
-              className="gap-2"
-            >
-              {isNavigating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <PlusCircle className="h-4 w-4" />
-              )}
+          {/* --- 11. Replace Link with <a> tag --- */}
+          <a href="/branches/new">
+            <Button className="gap-2">
+              <PlusCircle className="h-4 w-4" />
               Add Branch
             </Button>
-          </Link>
+          </a>
         </div>
       </div>
 
-      {/* Statistics Cards (Same as before) */}
+      {/* Statistics Cards */}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Card className="p-3">
           <CardHeader className="flex flex-row items-center justify-between p-0 space-y-0">
@@ -287,7 +524,8 @@ export default function BranchesManagement() {
           </CardContent>
         </Card>
       </div>
-      {/* Branches Table Section (Corrected) */}
+
+      {/* Branches Table Section */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -298,7 +536,7 @@ export default function BranchesManagement() {
               </CardDescription>
             </div>
             <div className="text-sm text-muted-foreground">
-              Showing {mockBranches.length} branches
+              Showing {branches.length} branches
             </div>
           </div>
         </CardHeader>
