@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const DataTableColumnHeader = ({ column, title }) => {
   return (
@@ -135,6 +136,81 @@ export const columns = [
     id: "actions",
     cell: ({ row }) => {
       const organization = row.original;
+
+      const handleDeactivate = async (id) => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${id}/deactivate`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer",
+              },
+            }
+          );
+
+          if (!response.ok) {
+            toast.error(
+              "There is something wrong with reqiest please check again and send this request!"
+            );
+          } else {
+            toast.success("Organization Deactivated Successfully!");
+          }
+        } catch (e) {
+          toast.error("Action Failed Please Try Again Later!");
+        }
+      };
+
+      const handleActivate = async (id) => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${id}/activate`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer",
+              },
+            }
+          );
+
+          if (!response.ok) {
+            toast.error(
+              "There is something wrong with reqiest please check again and send this request!"
+            );
+          } else {
+            toast.success("Organization Activated Successfully!");
+          }
+        } catch (e) {
+          toast.error("Action Failed Please Try Again Later!");
+        }
+      };
+
+      const handleDelete = async (id) => {
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${id}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer",
+              },
+            }
+          );
+
+          if (!response.ok) {
+            toast.error(
+              "There is something wrong with reqiest please check again and send this request!"
+            );
+          } else {
+            toast.success("Organization Deleted Successfully!");
+          }
+        } catch (e) {
+          toast.error("Action Failed Please Try Again Later!");
+        }
+      };
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -145,14 +221,24 @@ export const columns = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <Link href={`/organizations/${organization.id}`} passHref>
-              <DropdownMenuItem>View Dashboard</DropdownMenuItem>
-            </Link>
             <Link href={`/organizations/${organization.id}/edit`} passHref>
               <DropdownMenuItem>Edit Settings</DropdownMenuItem>
             </Link>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-500">
+            <DropdownMenuItem
+              className="text-red-800"
+              onClick={() => handleDelete(organization.id)}
+            >
+              Delete
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-500"
+              onClick={() =>
+                organization.is_active
+                  ? handleDeactivate(organization.id)
+                  : handleActivate(organization.id)
+              }
+            >
               {organization.is_active ? "Suspend" : "Activate"}
             </DropdownMenuItem>
           </DropdownMenuContent>
