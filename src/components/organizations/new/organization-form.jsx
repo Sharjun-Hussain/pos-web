@@ -38,7 +38,9 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/png",
   "image/webp",
 ];
-
+const phoneRegex = new RegExp(
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
+);
 // CHANGED: Exporting schema for type inference
 export const formSchema = z.object({
   logo: z
@@ -52,6 +54,9 @@ export const formSchema = z.object({
       (file) => !file || ACCEPTED_IMAGE_TYPES.includes(file.type),
       "Only .jpg, .jpeg, .png and .webp formats are supported."
     ),
+  website: z.string().optional(),
+  phone: z.string().regex(phoneRegex, "Invalid phone number"),
+  address: z.string().optional(),
   name: z
     .string()
     .min(2, { message: "Organization name must be at least 2 characters." }),
@@ -93,6 +98,9 @@ export function OrganizationForm() {
       logo: undefined,
       name: "",
       code: "",
+      phone: "",
+      website: "",
+      address: "",
       owner_email: "",
       city: "",
       subscription_plan: "",
@@ -113,6 +121,9 @@ export function OrganizationForm() {
     formData.append("code", data.code);
     formData.append("owner_email", data.owner_email);
     formData.append("city", data.city);
+    formData.append("phone", data.phone);
+    formData.append("address", data.address);
+    formData.append("website", data.website);
     formData.append("subscription_plan", data.subscription_plan);
     formData.append("status", data.status);
     formData.append("is_multi_branch", data.is_multi_branch ? "1" : "0");
@@ -140,26 +151,17 @@ export function OrganizationForm() {
       const result = await response.json();
       console.log("Organization created:", result);
 
-      // SUCCESS:
       toast.success("Success!", "Organization created successfully.");
 
-      // Wait 1s, then navigate. The buttons will remain
-      // disabled this whole time, which is good UX.
       setTimeout(() => {
         router.back();
       }, 1000);
-
-      // Note: We DO NOT call setIsLoading(false) here.
     } catch (error) {
-      // ERROR:
       console.error("Submission error:", error);
       toast.error(error.message || "Failed to create organization.");
 
-      // Only set loading to false if there's an error,
-      // so the user can try again.
       setIsLoading(false);
     }
-    // We remove the `finally` block entirely.
   }
 
   return (
@@ -167,8 +169,6 @@ export function OrganizationForm() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* ... (The rest of your form fields remain unchanged) ... */}
-
             <div>
               <h3 className="text-lg font-medium mb-4">Organization Details</h3>
 
@@ -271,6 +271,51 @@ export function OrganizationForm() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="Enter phone"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Address</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter address" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="website"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Website</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter website" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
 
@@ -310,7 +355,7 @@ export function OrganizationForm() {
                     )}
                   />
 
-                  <FormField
+                  {/* <FormField
                     control={form.control}
                     name="status"
                     render={({ field }) => (
@@ -336,7 +381,7 @@ export function OrganizationForm() {
                         <FormMessage />
                       </FormItem>
                     )}
-                  />
+                  /> */}
                 </div>
 
                 <FormField
