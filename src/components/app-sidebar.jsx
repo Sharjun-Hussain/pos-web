@@ -10,6 +10,7 @@ import {
   Frame,
   GalleryVerticalEnd,
   Map,
+  Origami,
   PieChart,
   Settings,
   Settings2,
@@ -139,6 +140,13 @@ const data = {
       icon: PieChart,
     },
   ],
+  Organization: [
+    {
+      name: "Organizations",
+      url: "/organizations",
+      icon: Origami,
+    },
+  ],
 };
 
 export function AppSidebar({ ...props }) {
@@ -149,7 +157,8 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.Core} />
+        <NavProjects projects={data.Core} label="Users Management" />
+        <NavProjects projects={data.Organization} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

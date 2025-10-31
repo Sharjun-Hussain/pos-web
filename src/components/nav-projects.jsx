@@ -10,12 +10,12 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
-export function NavProjects({ projects }) {
+export function NavProjects({ projects, label }) {
   const { isMobile } = useSidebar();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Users Management</SidebarGroupLabel>
+      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
       <SidebarMenu>
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
