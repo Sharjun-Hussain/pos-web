@@ -22,6 +22,7 @@ import {
   UserX,
   Briefcase,
   Building,
+  LoaderIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -230,7 +231,7 @@ export default function OrganizationPage() {
     return (
       <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <LoaderIcon className="h-8 w-8 animate-spin" />
           <span className="ml-2">Loading organizations...</span>
         </div>
       </div>

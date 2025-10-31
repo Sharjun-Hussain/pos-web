@@ -22,6 +22,7 @@ import {
   UserCheck,
   UserX,
   Briefcase,
+  LoaderIcon,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -245,7 +246,7 @@ export default function EmployeesPage() {
               className="gap-2"
             >
               {isNavigating ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <LoaderIcon className="h-4 w-4 animate-spin" />
               ) : (
                 <PlusCircle className="h-4 w-4" />
               )}

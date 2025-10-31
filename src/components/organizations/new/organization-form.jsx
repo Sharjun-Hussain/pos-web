@@ -3,9 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Building } from "lucide-react";
+import { Building, LoaderIcon } from "lucide-react";
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // CHANGED: For navigation on success
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -354,34 +354,6 @@ export function OrganizationForm() {
                       </FormItem>
                     )}
                   />
-
-                  {/* <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select a status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {statuses.map((status) => (
-                              <SelectItem key={status.id} value={status.id}>
-                                {status.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  /> */}
                 </div>
 
                 <FormField
@@ -408,13 +380,20 @@ export function OrganizationForm() {
               </div>
             </div>
 
-            {/* CHANGED: Disable buttons and show loading text on submit */}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save Organization"}
+                {" "}
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    {" "}
+                    <LoaderIcon className="h4 w-4 animate-spin" /> Saving{" "}
+                  </span>
+                ) : (
+                  "Save Organization"
+                )}
               </Button>
             </div>
           </form>
