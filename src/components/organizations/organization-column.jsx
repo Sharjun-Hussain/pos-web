@@ -1,3 +1,4 @@
+// app/organizations/organization-columns.tsx
 "use client";
 
 import { ArrowUpDown, MoreHorizontal, Building } from "lucide-react";
@@ -14,11 +15,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import { toast } from "sonner";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useOrganizationActions } from "@/app/hooks/swr/useOrganizationAction";
 
+// Reusable Header Component (from your file)
 const DataTableColumnHeader = ({ column, title }) => {
   return (
     <Button
@@ -31,7 +29,8 @@ const DataTableColumnHeader = ({ column, title }) => {
   );
 };
 
-export const columns = [
+// Notice this is now a function
+export const getOrganizationColumns = ({ onDelete, onToggleStatus }) => [
   {
     id: "select",
     header: ({ table }) => (
@@ -83,15 +82,7 @@ export const columns = [
       );
     },
   },
-  // {
-  //   accessorKey: "code",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="Org Code" />
-  //   ),
-  //   cell: ({ row }) => {
-  //     return <Badge variant="outline">{row.getValue("code")}</Badge>;
-  //   },
-  // },
+  // ... all your other columns (city, is_multi_branch, etc.)
   {
     accessorKey: "city",
     header: ({ column }) => (
@@ -139,96 +130,8 @@ export const columns = [
     id: "actions",
     cell: ({ row }) => {
       const organization = row.original;
-      const { data: session, status } = useSession();
-      const { deleteOrganization, toggleOrganizationStatus } =
-        useOrganizationActions();
-      const router = useRouter();
 
-      const handleDeactivate = async (id) => {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${id}/deactivate`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${session.accessToken}`,
-              },
-            }
-          );
-
-          if (!response.ok) {
-            toast.error(
-              "There is something wrong with reqiest please check again and send this request!"
-            );
-          } else {
-            toast.success("Organization Deactivated Successfully!");
-          }
-        } catch (e) {
-          toast.error("Action Failed Please Try Again Later!");
-        }
-      };
-
-      const handleActivate = async (id) => {
-        try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${id}/activate`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${session.accessToken}`,
-              },
-            }
-          );
-
-          if (!response.ok) {
-            toast.error(
-              "There is something wrong with reqiest please check again and send this request!"
-            );
-          } else {
-            toast.success("Organization Activated Successfully!");
-          }
-        } catch (e) {
-          toast.error("Action Failed Please Try Again Later!");
-        }
-      };
-
-      const handleDelete = async (id) => {
-        const result = await deleteOrganization(id);
-        if (result.success) {
-          toast.success("Organization Deleted Successfully!");
-          window.location.reload();
-        } else {
-          toast.error(result.error || "Action Failed Please Try Again Later!");
-        }
-      };
-
-      // const handleDelete = async (id) => {
-      //   try {
-      //     const response = await fetch(
-      //       `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${id}`,
-      //       {
-      //         method: "DELETE",
-      //         headers: {
-      //           "Content-Type": "application/json",
-      //           Authorization: `Bearer ${session.accessToken}`,
-      //         },
-      //       }
-      //     );
-
-      //     if (!response.ok) {
-      //       toast.error(
-      //         "There is something wrong with reqiest please check again and send this request!"
-      //       );
-      //     } else {
-      //       toast.success("Organization Deleted Successfully!");
-      //       mutate("/organizations");
-      //     }
-      //   } catch (e) {
-      //     toast.error("Action Failed Please Try Again Later!");
-      //   }
-      // };
+      // The API logic is GONE. We just call the props.
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -245,17 +148,13 @@ export const columns = [
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-red-800"
-              onClick={() => handleDelete(organization.id)}
+              onClick={() => onDelete(organization.id)}
             >
               Delete
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-red-500"
-              onClick={() =>
-                organization.is_active
-                  ? handleDeactivate(organization.id)
-                  : handleActivate(organization.id)
-              }
+              onClick={() => onToggleStatus(organization)}
             >
               {organization.is_active ? "Suspend" : "Activate"}
             </DropdownMenuItem>

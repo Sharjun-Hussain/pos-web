@@ -49,6 +49,7 @@ import { columns } from "./columns";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import OrganizationPageSkeleton from "@/app/skeletons/Organization-skeleton";
+import { useOrganizations } from "@/app/hooks/swr/useOrganization";
 
 const OrganizationBulkActions = ({ table }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
@@ -170,6 +171,7 @@ export default function OrganizationPage() {
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
+  // const { organizations, isLoading, isError } = useOrganizations();
 
   useEffect(() => {
     if (status === "unauthenticated") {

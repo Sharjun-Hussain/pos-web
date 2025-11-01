@@ -1,6 +1,7 @@
 'use client';
 import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from './providers/theme-provider';
+import { SWRProvider } from './providers/swr-provider';
 
 export default function Providers({ children }) {
   return <SessionProvider>
@@ -10,6 +11,9 @@ export default function Providers({ children }) {
             enableSystem
             disableTransitionOnChange
           >
+             <SWRProvider>
+
       {children}
+             </SWRProvider>
       </ThemeProvider></SessionProvider>;
 }

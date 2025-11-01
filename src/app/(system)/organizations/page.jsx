@@ -1,8 +1,9 @@
-import OrganizationsPage from "@/components/organizations/organizations-management";
+// import OrganizationsPage from "@/components/organizations/organizations-management";
+import OrganizationPage from "@/components/organizations/organization-management";
 import React from "react";
 
 const page = () => {
-  return <OrganizationsPage />;
+  return <OrganizationPage />;
 };
 
 export default page;

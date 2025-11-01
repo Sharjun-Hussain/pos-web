@@ -30,6 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = [
@@ -88,6 +89,7 @@ const statuses = [
 export function OrganizationForm() {
   // CHANGED: Add loading state
   const [isLoading, setIsLoading] = useState(false);
+  const { data: session, status } = useSession();
 
   // CHANGED: Initialize router and toast
   const router = useRouter();
@@ -138,7 +140,7 @@ export function OrganizationForm() {
           method: "POST",
           body: formData,
           headers: {
-            // "Authorization": "Bearer YOUR_API_TOKEN",
+            Authorization: `Bearer ${session.accessToken}`,
           },
         }
       );

@@ -17,7 +17,7 @@ export default function OrganizationPageSkeleton() {
       </div>
 
       {/* Statistics Cards Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i}>
             <CardContent className="p-6">
@@ -31,7 +31,7 @@ export default function OrganizationPageSkeleton() {
             </CardContent>
           </Card>
         ))}
-      </div>
+      </div> */}
 
       {/* Organizations Table Section Skeleton */}
       <Card>
