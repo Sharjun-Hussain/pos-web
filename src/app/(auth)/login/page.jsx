@@ -48,10 +48,9 @@ export default function ModernIndustrialLoginPageLight() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const searchparams = useSearchParams();
-  const returnUrl = searchparams.get("return_url");
-  console.log(returnUrl);
 
   useEffect(() => {
+    const returnUrl = searchparams.get("return_url");
     if (status === "authenticated") {
       toast.info("Already logged in. Redirecting...");
       router.push(returnUrl || "/");
