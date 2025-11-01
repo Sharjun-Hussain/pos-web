@@ -136,7 +136,7 @@ export default function OrganizationPage() {
   }, [router, status]);
 
   const fetchOrganizations = async () => {
-    if (!session?.accessToken) return; // Wait for session
+    if (!session?.accessToken) return;
     try {
       setLoading(true);
       setError(null);
