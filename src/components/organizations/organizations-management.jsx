@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { columns } from "./columns";
+import { useSession } from "next-auth/react";
 
 const OrganizationBulkActions = ({ table }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
@@ -165,6 +166,7 @@ export default function OrganizationPage() {
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { data: session, status } = useSession();
 
   // API fetch function
   const fetchOrganizations = async () => {
@@ -180,7 +182,7 @@ export default function OrganizationPage() {
             Accept: "application/json",
             "Content-Type": "application/json",
             // Add any required authentication headers here
-            // 'Authorization': `Bearer ${yourToken}`,
+            Authorization: `Bearer ${session.accessToken}`,
           },
         }
       );
