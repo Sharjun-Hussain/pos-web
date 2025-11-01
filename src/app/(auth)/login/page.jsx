@@ -26,6 +26,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { signIn } from "next-auth/react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z
@@ -42,6 +45,7 @@ const formSchema = z.object({
 export default function ModernIndustrialLoginPageLight() {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState(null);
+  const router = useRouter();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -55,21 +59,27 @@ export default function ModernIndustrialLoginPageLight() {
     setIsLoading(true);
     setServerError(null);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setServerError(null);
 
-    if (
-      values.email !== "admin@system.com" ||
-      values.password !== "password123"
-    ) {
-      setServerError("Invalid email or password. Please try again.");
+    const result = await signIn("credentials", {
+      redirect: false,
+      email: values.email,
+      password: values.password,
+    });
+
+    // 4. Handle the result
+    if (result.ok) {
+      toast.success("Login Succesfull!");
+      setServerError(null);
+      // Redirect to a protected page (e.g., the dashboard)
+      router.push("/");
+      setIsLoading(false);
     } else {
-      console.log("Login successful:", values);
-      // In a real app, you'd redirect here, e.g., router.push('/dashboard');
-      alert("Login Successful! (This is a demo alert)");
+      toast.error("Login Failed!");
+      setServerError("Invalid email or password. Please try again.");
+      console.error("Login Error:", result.error);
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }
 
   return (

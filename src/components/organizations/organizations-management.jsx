@@ -173,7 +173,7 @@ export default function OrganizationPage() {
       setError(null);
 
       const response = await fetch(
-        "https://apipos.inzeedo.com/api/v1/organizations",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations`,
         {
           method: "GET",
           headers: {
