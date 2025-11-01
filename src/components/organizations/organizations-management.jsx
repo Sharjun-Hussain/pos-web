@@ -48,6 +48,7 @@ import {
 import { columns } from "./columns";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import OrganizationPageSkeleton from "@/app/skeletons/Organization-skeleton";
 
 const OrganizationBulkActions = ({ table }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
@@ -172,11 +173,8 @@ export default function OrganizationPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push(
-        `/login?return_url=${encodeURIComponent(
-          window.location.hostname + window.location.pathname
-        )}`
-      );
+      const returnUrl = window.location.pathname + window.location.search;
+      router.push(`/login?return_url=${encodeURIComponent(returnUrl)}`);
     }
   }, [router, status]);
 
@@ -241,14 +239,7 @@ export default function OrganizationPage() {
   });
 
   if (loading) {
-    return (
-      <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
-        <div className="flex items-center justify-center h-64">
-          <LoaderIcon className="h-4 w-4 animate-spin" />
-          <span className="ml-2">Loading organizations...</span>
-        </div>
-      </div>
-    );
+    return <OrganizationPageSkeleton />;
   }
 
   if (error) {

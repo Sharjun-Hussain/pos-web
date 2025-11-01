@@ -2,22 +2,16 @@
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 import { EntityManagement } from "./components/EntityManagement";
-// Attempting to fix the component import path
-// --- Live API Functions ---
 
-// Helper function for handling API responses
 const handleResponse = async (response) => {
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({})); // Try to parse error, fallback to empty obj
+    const errorData = await response.json().catch(() => ({}));
     console.error("API Error:", response.status, errorData);
-    // In a real app, you'd throw an error to be caught by React Query or a try/catch block
-    // For EntityManagement, we might need to adjust based on how it handles errors
     throw new Error(errorData.message || "An unknown API error occurred.");
   }
-  return response.json(); // Return the parsed JSON data
+  return response.json();
 };
 
-// GET /maincategory
 const fetchMainCategories = async () => {
   console.log("Fetching categories from API...");
   try {
@@ -27,11 +21,10 @@ const fetchMainCategories = async () => {
     return await handleResponse(response);
   } catch (error) {
     console.error("Failed to fetch categories:", error);
-    throw error; // Re-throw for the component to handle
+    throw error;
   }
 };
 
-// POST /maincategory
 const addMainCategory = async (newCategory) => {
   console.log("Adding category via API:", newCategory);
   try {
@@ -58,7 +51,7 @@ const updateMainCategory = async (updatedCategory) => {
 
   try {
     const response = await fetch(`/maincategory/${updatedCategory.id}`, {
-      method: "PUT", // or PATCH if your API supports partial updates
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
@@ -71,17 +64,15 @@ const updateMainCategory = async (updatedCategory) => {
   }
 };
 
-// DELETE /maincategory/:id
 const deleteMainCategory = async (categoryId) => {
   console.log("Deleting category via API:", categoryId);
   try {
     const response = await fetch(`/maincategory/${categoryId}`, {
       method: "DELETE",
     });
-    // DELETE might return 204 No Content, or the deleted object.
-    // Adjust handleResponse if 204 is expected
+
     if (response.status === 204) {
-      return { id: categoryId }; // Return something to confirm deletion
+      return { id: categoryId };
     }
     return await handleResponse(response);
   } catch (error) {
@@ -89,7 +80,6 @@ const deleteMainCategory = async (categoryId) => {
     throw error;
   }
 };
-// --- End API Functions ---
 
 const renderStatusBadge = (status) => {
   const statusConfig = {
@@ -105,13 +95,10 @@ const renderStatusBadge = (status) => {
   return (
     <Badge className={`${config.className} hover:${config.className} border-0`}>
       {Icon && <Icon className="mr-1 h-3 w-3" />}
-      {/* Fixed a small template literal issue here, was `status` inside backticks */}
-      {status}
     </Badge>
   );
 };
 
-// The page component remains the same, just consuming the new live API functions.
 export default function MainCategoryPage() {
   const columns = [
     {
@@ -133,17 +120,14 @@ export default function MainCategoryPage() {
 
   return (
     <EntityManagement
-      // Entity Configuration
       entityName="category"
       entityPlural="categories"
       headerTitle="Main Categories"
       headerDescription="Manage the main categories for your platform."
-      // Data Functions (now pointing to live API calls)
       fetchEntities={fetchMainCategories}
       addEntity={addMainCategory}
       updateEntity={updateMainCategory}
       deleteEntity={deleteMainCategory}
-      // Table and Form Configuration
       columns={columns}
       initialFormData={{ name: "", status: "active" }}
       defaultSort={{ key: "name", direction: "asc" }}
