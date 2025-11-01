@@ -1,9 +1,8 @@
 "use client";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { EntityManagement } from "./components/EntityManagement";
 // Attempting to fix the component import path
-import { EntityManagement } from "../components/EntityManagement";
-
 // --- Live API Functions ---
 
 // Helper function for handling API responses

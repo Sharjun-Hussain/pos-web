@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { signIn, useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const formSchema = z.object({
   email: z
@@ -47,11 +47,14 @@ export default function ModernIndustrialLoginPageLight() {
   const [serverError, setServerError] = useState(null);
   const router = useRouter();
   const { data: session, status } = useSession();
+  const searchparams = useSearchParams();
+  const returnUrl = searchparams.get("return_url");
+  console.log(returnUrl);
 
   useEffect(() => {
     if (status === "authenticated") {
       toast.info("Already logged in. Redirecting...");
-      router.push("/");
+      router.push(returnUrl || "/");
     }
   }, [status, router]);
 

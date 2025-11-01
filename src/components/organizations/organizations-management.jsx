@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/select";
 import { columns } from "./columns";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const OrganizationBulkActions = ({ table }) => {
   const numSelected = table.getFilteredSelectedRowModel().rows.length;
@@ -167,6 +168,17 @@ export default function OrganizationPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push(
+        `/login?return_url=${encodeURIComponent(
+          window.location.hostname + window.location.pathname
+        )}`
+      );
+    }
+  }, [router, status]);
 
   // API fetch function
   const fetchOrganizations = async () => {
@@ -181,7 +193,6 @@ export default function OrganizationPage() {
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            // Add any required authentication headers here
             Authorization: `Bearer ${session.accessToken}`,
           },
         }
@@ -210,7 +221,7 @@ export default function OrganizationPage() {
     fetchOrganizations();
   }, []);
 
-  const organizationStats = calculateOrganizationStats(organizations);
+  // const organizationStats = calculateOrganizationStats(organizations);
 
   const table = useReactTable({
     data: organizations,
