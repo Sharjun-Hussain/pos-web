@@ -92,6 +92,8 @@ export const authOptions = {
       // Pass the access token and user info to the client-side session
       session.accessToken = token.accessToken;
       session.user = token.user;
+      console.log(session);
+      
       return session;
     },
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -46,6 +46,14 @@ export default function ModernIndustrialLoginPageLight() {
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState(null);
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      toast.info("Already logged in. Redirecting...");
+      router.push("/");
+    }
+  }, [status, router]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -67,11 +75,10 @@ export default function ModernIndustrialLoginPageLight() {
       password: values.password,
     });
 
-    // 4. Handle the result
     if (result.ok) {
       toast.success("Login Succesfull!");
       setServerError(null);
-      // Redirect to a protected page (e.g., the dashboard)
+
       router.push("/");
       setIsLoading(false);
     } else {
