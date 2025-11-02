@@ -45,7 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { columns } from "./columns";
+import { columns } from "./columns-old";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import OrganizationPageSkeleton from "@/app/skeletons/Organization-skeleton";
