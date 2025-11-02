@@ -58,11 +58,11 @@ export function AppSidebar({ ...props }) {
           },
           {
             title: "Sub Category",
-            url: "#",
+            url: "/sub-category",
           },
           {
             title: "Brand",
-            url: "#",
+            url: "/brand",
           },
           {
             title: "Branch",
@@ -72,14 +72,7 @@ export function AppSidebar({ ...props }) {
             title: "Supplier",
             url: "#",
           },
-          {
-            title: "City",
-            url: "#",
-          },
-          {
-            title: "Bank",
-            url: "#",
-          },
+
           {
             title: "Account Detail",
             url: "#",
