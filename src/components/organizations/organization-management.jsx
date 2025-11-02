@@ -32,10 +32,10 @@ import { ResourceManagementLayout } from "../general/resource-management-layout"
 import { getOrganizationColumns } from "./organization-column";
 
 const calculateOrganizationStats = (organizations) => ({
-  totalOrganizations: organizations.length,
-  activeOrganizations: organizations.filter((org) => org.is_active).length,
-  inactiveOrganizations: organizations.filter((org) => !org.is_active).length,
-  multiBranchOrganizations: organizations.filter((org) => org.is_multi_branch)
+  totalOrganizations: organizations?.length,
+  activeOrganizations: organizations?.filter((org) => org.is_active).length,
+  inactiveOrganizations: organizations?.filter((org) => !org.is_active).length,
+  multiBranchOrganizations: organizations?.filter((org) => org.is_multi_branch)
     .length,
 });
 
@@ -151,7 +151,7 @@ export default function OrganizationPage() {
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       if (data.status === "success") {
-        setOrganizations(data.data.data);
+        setOrganizations(data?.data?.data || []);
       } else {
         throw new Error(data.message || "Failed to fetch");
       }
@@ -200,10 +200,10 @@ export default function OrganizationPage() {
   };
 
   const handleToggleStatus = async (organization) => {
-    const action = organization.is_active ? "deactivate" : "activate";
+    const action = organization?.is_active ? "deactivate" : "activate";
     toast.promise(
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organization.id}/${action}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organization?.id}/${action}`,
         {
           method: "PATCH",
           headers: { Authorization: `Bearer ${session.accessToken}` },
@@ -262,7 +262,7 @@ export default function OrganizationPage() {
                 Total Organizations
               </p>
               <p className="text-2xl font-bold">
-                {organizationStats.totalOrganizations}
+                {organizationStats?.totalOrganizations}
               </p>
             </div>
             <Building className="h-8 w-8 text-blue-500" />
