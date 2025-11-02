@@ -162,7 +162,9 @@ export function OrganizationForm({ initialData }) {
       ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${initialData.id}`
       : `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations`;
 
-    const method = "POST";
+    const method = isEditMode ? "PATCH" : "POST";
+    console.log(method);
+
     if (isEditMode) {
       formData.append("_method", "PATCH");
     }

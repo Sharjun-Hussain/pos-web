@@ -1,4 +1,3 @@
-// app/organizations/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -118,7 +117,6 @@ const OrganizationBulkActions = ({ table, onDelete, onDeactivate }) => {
   );
 };
 
-// 4. The Main Page Component
 export default function OrganizationPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [organizations, setOrganizations] = useState([]);
@@ -127,7 +125,6 @@ export default function OrganizationPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // 5. Auth and Data Fetching Logic STAYS here
   useEffect(() => {
     if (status === "unauthenticated") {
       const returnUrl = window.location.pathname + window.location.search;
@@ -168,7 +165,6 @@ export default function OrganizationPage() {
     }
   }, [status, session]); // Re-run when session is ready
 
-  // 6. Define all your API handlers here
   const handleAddClick = () => {
     setIsNavigating(true);
     router.push("/organizations/new");
@@ -244,13 +240,11 @@ export default function OrganizationPage() {
     );
   };
 
-  // 7. Get the columns by passing the handlers
   const columns = getOrganizationColumns({
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
   });
 
-  // 8. Define your StatCards component
   const organizationStats = calculateOrganizationStats(organizations);
   const statCards = (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -269,11 +263,9 @@ export default function OrganizationPage() {
           </div>
         </CardContent>
       </Card>
-      {/* ... other 3 cards ... */}
     </div>
   );
 
-  // 9. Render the generic layout!
   return (
     <ResourceManagementLayout
       data={organizations}

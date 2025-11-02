@@ -85,7 +85,7 @@ export default function BranchesPage() {
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       if (data.status === "success") {
-        setBranches(data.data.data);
+        setBranches(data?.data?.data || []);
       } else {
         throw new Error(data.message || "Failed to fetch");
       }
@@ -137,10 +137,10 @@ export default function BranchesPage() {
   };
 
   const handleToggleStatus = async (branch) => {
-    const action = branch.is_active ? "deactivate" : "activate";
+    const action = branch?.is_active ? "deactivate" : "activate";
     toast.promise(
       fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/${branch.id}/${action}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/${branch?.id}/${action}`,
         {
           method: "PATCH",
           headers: { Authorization: `Bearer ${session.accessToken}` },
@@ -150,7 +150,7 @@ export default function BranchesPage() {
         loading: `${action === "activate" ? "Activating" : "Suspending"}...`,
         success: () => {
           fetchBranches(); // Updated fetch call
-          return `Branch ${branch.name} ${action}d successfully!`; // Updated text
+          return `Branch ${branch?.name} ${action}d successfully!`; // Updated text
         },
         error: "Action failed.",
       }

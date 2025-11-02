@@ -76,14 +76,16 @@ const organizationFetcher = async ([url, token]) => {
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || "Failed to fetch organizations");
+    throw new Error(errorData?.message || "Failed to fetch organizations");
   }
 
   const data = await response.json();
   if (data.status === "success") {
-    return data.data.data.filter((org) => org.is_active && org.is_multi_branch);
+    return data?.data?.data?.filter(
+      (org) => org?.is_active && org?.is_multi_branch
+    );
   } else {
-    throw new Error(data.message || "Failed to fetch");
+    throw new Error(data?.message || "Failed to fetch");
   }
 };
 
@@ -153,6 +155,8 @@ export function BranchForm({ initialData }) {
     }
 
     setIsSubmitting(true);
+    // Clear any previous general server errors
+    form.clearErrors("root.serverError");
 
     const url = isEditMode
       ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/branches/${initialData?.id}`
@@ -170,19 +174,62 @@ export function BranchForm({ initialData }) {
         body: JSON.stringify(values),
       });
 
+      const responseData = await response.json(); // Always parse the JSON response
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to save branch.");
+        // --- START: NEW ERROR HANDLING LOGIC ---
+        let errorMessage = responseData.message || "An unknown error occurred.";
+
+        // Check for the specific validation error structure you provided
+        if (responseData.errors && Array.isArray(responseData.errors)) {
+          errorMessage =
+            responseData.message ||
+            "Please review the form and correct the issues.";
+
+          responseData.errors.forEach((error) => {
+            const fieldName = error.field;
+            const message = error.messages?.[0]; // Get the first message
+
+            if (fieldName && message) {
+              // Set the error for the specific field.
+              // This will automatically be displayed by the <FormMessage /> component.
+              form.setError(fieldName, {
+                type: "server",
+                message: message,
+              });
+            }
+          });
+        } else if (responseData.message) {
+          // Handle generic, non-field-specific errors
+          form.setError("root.serverError", {
+            type: "server",
+            message: responseData.message,
+          });
+        }
+
+        toast.error(errorMessage); // Show a general toast notification
+        // --- END: NEW ERROR HANDLING LOGIC ---
+      } else {
+        // --- SUCCESS CASE (No changes) ---
+        toast.success(
+          `Branch ${isEditMode ? "updated" : "created"} successfully!`
+        );
+
+        // Navigate back to the previous page on success
+        router.back();
       }
-
-      toast.success(
-        `Branch ${isEditMode ? "updated" : "created"} successfully!`
-      );
-
-      // Navigate back to the previous page on success
-      router.back();
     } catch (error) {
-      toast.error(error.message);
+      // --- CATCH BLOCK (For network errors, etc.) ---
+      const genericMessage =
+        "A network or server error occurred. Please try again.";
+      toast.error(error.message || genericMessage);
+      form.setError("root.serverError", {
+        type: "server",
+        message: error.message || genericMessage,
+      });
+      console.error("Submission error:", error);
+    } finally {
+      // This will run regardless of success or failure
       setIsSubmitting(false);
     }
   };
