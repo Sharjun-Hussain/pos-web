@@ -1,7 +1,7 @@
-import BranchesManagement from "@/components/branches/branches-management";
+import BranchesPage from "@/components/branches/branches-management";
 
-export default function BranchesPage() {
-  return <BranchesManagement />;
+export default function Page() {
+  return <BranchesPage />;
 }
 
 export const metadata = {
