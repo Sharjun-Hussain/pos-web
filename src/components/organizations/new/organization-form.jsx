@@ -4,8 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Building, LoaderIcon } from "lucide-react";
-import { useState } from "react";
+import { useState } from "react"; // --- CHANGED --- (useEffect not needed for this form)
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react"; // --- CHANGED ---
+import { toast } from "sonner"; // --- CHANGED ---
 
 import { Button } from "@/components/ui/button";
 import {
@@ -29,8 +31,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { toast } from "sonner";
-import { useSession } from "next-auth/react";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = [
@@ -42,7 +42,8 @@ const ACCEPTED_IMAGE_TYPES = [
 const phoneRegex = new RegExp(
   /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/
 );
-// CHANGED: Exporting schema for type inference
+
+// --- CHANGED --- Made optional fields handle empty strings like the example
 export const formSchema = z.object({
   logo: z
     .instanceof(File)
@@ -55,22 +56,18 @@ export const formSchema = z.object({
       (file) => !file || ACCEPTED_IMAGE_TYPES.includes(file.type),
       "Only .jpg, .jpeg, .png and .webp formats are supported."
     ),
-  website: z.string().optional(),
+  website: z.string().optional().or(z.literal("")), // --- CHANGED ---
   phone: z.string().regex(phoneRegex, "Invalid phone number"),
-  address: z.string().optional(),
+  address: z.string().optional().or(z.literal("")), // --- CHANGED ---
   name: z
     .string()
     .min(2, { message: "Organization name must be at least 2 characters." }),
   code: z
     .string()
     .min(4, { message: "Org. code must be at least 4 characters." }),
-  owner_email: z
-    .string()
-    .email({ message: "Please enter a valid email address." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
   city: z.string().min(2, { message: "City must be at least 2 characters." }),
-  subscription_plan: z.string({
-    required_error: "Please select a subscription plan.",
-  }),
+  subscription_plan: z.string().optional(),
   status: z.string({ required_error: "Please select a status." }),
   is_multi_branch: z.boolean().default(false).optional(),
 });
@@ -86,89 +83,125 @@ const statuses = [
   { id: "suspended", name: "Suspended" },
 ];
 
-export function OrganizationForm() {
-  // CHANGED: Add loading state
-  const [isLoading, setIsLoading] = useState(false);
-  const { data: session, status } = useSession();
-
-  // CHANGED: Initialize router and toast
+// --- CHANGED --- Added initialData prop
+export function OrganizationForm({ initialData }) {
+  // --- CHANGED --- Renamed to isSubmitting for consistency
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: session } = useSession();
+  const accessToken = session?.accessToken;
   const router = useRouter();
+
+  // --- CHANGED --- Detect edit mode
+  const isEditMode = !!initialData;
 
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      logo: undefined,
-      name: "",
-      code: "",
-      phone: "",
-      website: "",
-      address: "",
-      owner_email: "",
-      city: "",
-      subscription_plan: "",
-      status: "active",
-      is_multi_branch: false,
-    },
+    // --- CHANGED --- Set default values based on initialData
+    defaultValues: initialData
+      ? {
+          ...initialData,
+          logo: undefined, // File input cannot be pre-filled
+          website: initialData.website || "",
+          address: initialData.address || "",
+          phone: initialData.phone || "",
+          is_multi_branch: !!initialData.is_multi_branch,
+          email: initialData.email || "",
+          city: initialData.city || "",
+          subscription_plan: initialData.subscription_plan || undefined,
+          status: initialData.status || "active",
+        }
+      : {
+          logo: undefined,
+          name: "",
+          code: "",
+          phone: "",
+          website: "",
+          address: "",
+          email: "",
+          city: "",
+          subscription_plan: undefined,
+          status: "active",
+          is_multi_branch: false,
+        },
   });
 
+  // --- CHANGED --- Updated logo preview logic
   const logo = form.watch("logo");
-  const previewUrl = logo ? URL.createObjectURL(logo) : null;
+  const newLogoPreview = logo ? URL.createObjectURL(logo) : null;
+  // Assumes the existing logo URL is passed as `logo_url` in initialData
+  const previewUrl =
+    newLogoPreview || `https://apipos.inzeedo.com/${initialData?.logo}` || "";
 
-  // CHANGED: Updated onSubmit function to call the API
   async function onSubmit(data) {
-    setIsLoading(true); // 1. Disable buttons immediately
+    if (!accessToken) {
+      toast.error("Authentication failed. Please log in again.");
+      return;
+    }
+
+    setIsSubmitting(true);
 
     const formData = new FormData();
     formData.append("name", data.name);
     formData.append("code", data.code);
-    formData.append("owner_email", data.owner_email);
+    formData.append("email", data.email);
     formData.append("city", data.city);
     formData.append("phone", data.phone);
-    formData.append("address", data.address);
-    formData.append("website", data.website);
-    formData.append("subscription_plan", data.subscription_plan);
+    if (data.address) formData.append("address", data.address);
+    if (data.website) formData.append("website", data.website);
+    if (data.subscription_plan)
+      formData.append("subscription_plan", data.subscription_plan);
     formData.append("status", data.status);
     formData.append("is_multi_branch", data.is_multi_branch ? "1" : "0");
+
+    // Only append the logo if a *new* one was selected
     if (data.logo) {
       formData.append("logo", data.logo);
     }
 
+    const url = isEditMode
+      ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${initialData.id}`
+      : `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations`;
+
+    const method = "POST";
+    if (isEditMode) {
+      formData.append("_method", "PATCH");
+    }
+
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations`,
-        {
-          method: "POST",
-          body: formData,
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-        }
-      );
+      const response = await fetch(url, {
+        method: method,
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create organization.");
+        throw new Error(
+          errorData.message ||
+            `Failed to ${isEditMode ? "update" : "create"} organization.`
+        );
       }
 
-      const result = await response.json();
-      console.log("Organization created:", result);
+      toast.success(
+        `Organization ${isEditMode ? "updated" : "created"} successfully!`
+      );
 
-      toast.success("Success!", "Organization created successfully.");
-
-      setTimeout(() => {
-        router.back();
-      }, 1000);
+      // Navigate back on success
+      router.back();
     } catch (error) {
       console.error("Submission error:", error);
-      toast.error(error.message || "Failed to create organization.");
-
-      setIsLoading(false);
+      toast.error(error.message || "An unexpected error occurred.");
+      setIsSubmitting(false); // Only set to false on error
     }
   }
 
   return (
     <Card className="">
-      <CardContent>
+      <CardContent className="pt-6">
+        {" "}
+        {/* --- CHANGED --- Added padding top */}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <div>
@@ -181,7 +214,8 @@ export function OrganizationForm() {
                   <FormItem>
                     <div className="flex items-center gap-6">
                       <Avatar className="w-20 h-20">
-                        <AvatarImage src={previewUrl || ""} alt="Logo" />
+                        {/* --- CHANGED --- Use dynamic previewUrl */}
+                        <AvatarImage src={previewUrl} alt="Logo" />
                         <AvatarFallback>
                           <Building className="w-10 h-10" />
                         </AvatarFallback>
@@ -199,9 +233,14 @@ export function OrganizationForm() {
                           onChange={(e) =>
                             field.onChange(e.target.files?.[0] ?? null)
                           }
+                          disabled={isSubmitting} // --- CHANGED ---
                         />
                       </FormControl>
-                      <Button asChild variant="outline">
+                      <Button
+                        asChild
+                        variant="outline"
+                        disabled={isSubmitting} // --- CHANGED ---
+                      >
                         <label htmlFor="file-upload">Upload Logo</label>
                       </Button>
                     </div>
@@ -221,6 +260,7 @@ export function OrganizationForm() {
                         <Input
                           placeholder="Enter organization name"
                           {...field}
+                          disabled={isSubmitting} // --- CHANGED ---
                         />
                       </FormControl>
                       <FormMessage />
@@ -237,15 +277,21 @@ export function OrganizationForm() {
                         <Input
                           placeholder="Enter unique code (e.g., ABCD004)"
                           {...field}
+                          // --- CHANGED --- Org code is often immutable
+                          disabled={isSubmitting || isEditMode}
                         />
                       </FormControl>
+                      {/* --- CHANGED --- Added description */}
+                      <FormDescription>
+                        Cannot be changed after creation.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 <FormField
                   control={form.control}
-                  name="owner_email"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Owner's Email Address</FormLabel>
@@ -254,8 +300,14 @@ export function OrganizationForm() {
                           type="email"
                           placeholder="Enter owner's email address"
                           {...field}
+                          // --- CHANGED --- Owner email is often immutable
+                          disabled={isSubmitting || isEditMode}
                         />
                       </FormControl>
+                      {/* --- CHANGED --- Added description */}
+                      <FormDescription>
+                        Cannot be changed after creation.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -267,7 +319,11 @@ export function OrganizationForm() {
                     <FormItem>
                       <FormLabel>City</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter city" {...field} />
+                        <Input
+                          placeholder="Enter city"
+                          {...field}
+                          disabled={isSubmitting} // --- CHANGED ---
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -281,38 +337,45 @@ export function OrganizationForm() {
                       <FormLabel>Phone</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
+                          type="tel" // --- CHANGED --- Use type "tel"
                           placeholder="Enter phone"
                           {...field}
+                          disabled={isSubmitting} // --- CHANGED ---
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <FormLabel>Address (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter address" {...field} />
+                        <Input
+                          placeholder="Enter address"
+                          {...field}
+                          disabled={isSubmitting} // --- CHANGED ---
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="website"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Website</FormLabel>
+                      <FormLabel>Website (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter website" {...field} />
+                        <Input
+                          placeholder="https://example.com"
+                          {...field}
+                          disabled={isSubmitting} // --- CHANGED ---
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -337,7 +400,9 @@ export function OrganizationForm() {
                         <FormLabel>Subscription Plan</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          // --- CHANGED --- Use value prop for controlled component
+                          value={field.value}
+                          disabled={isSubmitting} // --- CHANGED ---
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
@@ -356,6 +421,35 @@ export function OrganizationForm() {
                       </FormItem>
                     )}
                   />
+                  {/* <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Status</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          // --- CHANGED --- Use value prop for controlled component
+                          value={field.value}
+                          disabled={isSubmitting}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {statuses.map((status) => (
+                              <SelectItem key={status.id} value={status.id}>
+                                {status.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  /> */}
                 </div>
 
                 <FormField
@@ -374,6 +468,7 @@ export function OrganizationForm() {
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={field.onChange}
+                          disabled={isSubmitting} // --- CHANGED ---
                         />
                       </FormControl>
                     </FormItem>
@@ -382,19 +477,25 @@ export function OrganizationForm() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" disabled={isLoading}>
+            {/* --- CHANGED --- Updated buttons */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {" "}
-                {isLoading ? (
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <span className="flex items-center gap-2">
-                    {" "}
-                    <LoaderIcon className="h4 w-4 animate-spin" /> Saving{" "}
+                    <LoaderIcon className="h-4 w-4 animate-spin" /> Saving...
                   </span>
+                ) : isEditMode ? (
+                  "Save Changes"
                 ) : (
-                  "Save Organization"
+                  "Create Organization"
                 )}
               </Button>
             </div>
