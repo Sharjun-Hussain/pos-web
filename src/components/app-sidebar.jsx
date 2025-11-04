@@ -136,7 +136,12 @@ export function AppSidebar({ ...props }) {
         icon: PieChart,
       },
     ],
-    Organization: [
+    Settings: [
+      {
+        name: "Settings",
+        url: "/settings",
+        icon: Settings,
+      },
       {
         name: "Organizations",
         url: "/organizations",
@@ -153,7 +158,8 @@ export function AppSidebar({ ...props }) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavProjects projects={data.Core} label="Users Management" />
-        <NavProjects projects={data.Organization} />
+
+        <NavProjects projects={data.Settings} label="Internal Setings" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

@@ -1,62 +1,77 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as TabsPrimitive from "@radix-ui/react-tabs"
+import * as React from "react";
+import * as TabsPrimitive from "@radix-ui/react-tabs";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-function Tabs({
-  className,
-  ...props
-}) {
+function Tabs({ className, ...props }) {
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
-      className={cn("flex flex-col gap-2", className)}
-      {...props} />
+      className={cn("flex flex-col w-full", className)}
+      {...props}
+    />
   );
 }
 
-function TabsList({
-  className,
-  ...props
-}) {
+function TabsList({ className, ...props }) {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]",
+        // Creates the bottom border line for the list
+        "inline-flex h-10 items-center justify-start border-b border-gray-200 dark:border-gray-700 p-0 text-muted-foreground",
         className
       )}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-function TabsTrigger({
-  className,
-  ...props
-}) {
+function TabsTrigger({ className, ...props }) {
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "data-[state=active]:bg-background dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        // Base styles
+        "inline-flex items-center justify-center whitespace-nowrap px-4 py-2 text-sm font-medium",
+        // Animation
+        "transition-all duration-200 ease-in-out",
+        // Bottom border setup (transparent by default)
+        "border-b-2 border-transparent",
+        // Negative margin to overlap the list's border, making the active underline cover it
+        "-mb-[1px]",
+        // Text color
+        "text-muted-foreground",
+        // Focus styles
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        // Disabled styles
+        "disabled:pointer-events-none disabled:opacity-50",
+        // Hover styles
+        "hover:text-foreground",
+        // Active state (the blue-600 underline)
+        "data-[state=active]:text-blue-600 data-[state=active]:border-blue-600 dark:data-[state=active]:text-blue-500 dark:data-[state=active]:border-blue-500",
+        "data-[state=active]:font-semibold",
         className
       )}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-function TabsContent({
-  className,
-  ...props
-}) {
+function TabsContent({ className, ...props }) {
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("flex-1 outline-none", className)}
-      {...props} />
+      className={cn(
+        "flex-1 outline-none mt-4", // Added margin-top for content spacing
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        className
+      )}
+      {...props}
+    />
   );
 }
 
-export { Tabs, TabsList, TabsTrigger, TabsContent }
+export { Tabs, TabsList, TabsTrigger, TabsContent };
