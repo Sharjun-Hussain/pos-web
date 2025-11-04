@@ -1,13 +1,13 @@
-import { SettingsPage } from "@/components/settings/settings-page";
+import SupplierPage from "@/components/purchase/suppliers/supplier-management";
 import React from "react";
 
 const page = () => {
-  return <SettingsPage />;
+  return <SupplierPage />;
 };
 
 export default page;
 
 export const metadata = {
-  title: "Settings | EMI-POS",
+  title: "Suppliers | EMI-POS  ",
   description: "Developed By : Inzeedo (PVT) Ltd.",
 };
