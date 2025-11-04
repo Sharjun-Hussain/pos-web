@@ -7,8 +7,8 @@ import { UserSettings } from "./user-settings";
 
 export function SettingsPage() {
   return (
-    <div className="flex  flex-col bg-background ml-8">
-      <div className="flex items-start justify-start flex-col py-6">
+    <div className="flex  flex-col bg-background ml-6">
+      <div className="flex items-start justify-start flex-col py-4">
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>{" "}
         <div className="mt-1 text-sm text-muted-foreground">
           Configure your POS system preferences

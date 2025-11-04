@@ -15,6 +15,7 @@ import {
   Settings,
   Settings2,
   SquareTerminal,
+  UsersRoundIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -136,6 +137,23 @@ export function AppSidebar({ ...props }) {
         icon: PieChart,
       },
     ],
+    Purchase: [
+      {
+        name: "Suppliers",
+        url: "/suppliers",
+        icon: UsersRoundIcon,
+      },
+      {
+        name: "Purchase Orders",
+        url: "/purchase-orders",
+        icon: Bot,
+      },
+      {
+        name: "Good Received Notes",
+        url: "/good-received-notes",
+        icon: Command,
+      },
+    ],
     Settings: [
       {
         name: "Settings",
@@ -158,6 +176,7 @@ export function AppSidebar({ ...props }) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavProjects projects={data.Core} label="Users Management" />
+        <NavProjects projects={data.Purchase} label="Purchases" />
 
         <NavProjects projects={data.Settings} label="Internal Setings" />
       </SidebarContent>
