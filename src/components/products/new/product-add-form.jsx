@@ -253,46 +253,47 @@ export function ProductForm({ categories = [], brands = [], tenants = [] }) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
-                  name="name"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Product Name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Cotton T-Shirt" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  name="short_description"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Short Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Brief product description for listings..."
-                          className="h-20"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    name="name"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Name *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Cotton T-Shirt" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="code"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Product Code *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. CT-001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
                 <FormField
                   name="description"
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Description</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Detailed product description, features, benefits..."
-                          className="h-32"
+                          className="h-12"
                           {...field}
                         />
                       </FormControl>
@@ -420,9 +421,31 @@ export function ProductForm({ categories = [], brands = [], tenants = [] }) {
                     )}
                   />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="has_variants"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>This product has variants</FormLabel>
+                        <div className="text-sm text-gray-500">
+                          Enable if product comes in different options like
+                          size, color, etc.
+                        </div>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </CardContent>
             </Card>
-
+            {/* Images */}
             <Card>
               <CardHeader>
                 <CardTitle>Images & Media</CardTitle>
@@ -508,8 +531,8 @@ export function ProductForm({ categories = [], brands = [], tenants = [] }) {
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
+            {/* Pricing  */}
+            {/* <Card>
               <CardHeader>
                 <CardTitle>Pricing & Discounts</CardTitle>
               </CardHeader>
@@ -658,9 +681,9 @@ export function ProductForm({ categories = [], brands = [], tenants = [] }) {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
-            {productType === "physical" && (
+            {/* {productType === "physical" && (
               <Card>
                 <CardHeader>
                   <CardTitle>Identification & Stock Control</CardTitle>
@@ -756,202 +779,10 @@ export function ProductForm({ categories = [], brands = [], tenants = [] }) {
                   />
                 </CardContent>
               </Card>
-            )}
+            )} */}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Variants</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="has_variants"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel>This product has variants</FormLabel>
-                        <div className="text-sm text-gray-500">
-                          Enable if product comes in different options like
-                          size, color, etc.
-                        </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                {hasVariants && (
-                  <div className="space-y-6">
-                    <div>
-                      <FormLabel className="text-base">
-                        Variant Options
-                      </FormLabel>
-                      {variantOptionFields.map((field, index) => (
-                        <div
-                          key={field.id}
-                          className="flex items-end gap-4 mb-4 p-4 border rounded-lg"
-                        >
-                          <FormField
-                            name={`variantOptions.${index}.name`}
-                            control={form.control}
-                            render={({ field }) => (
-                              <FormItem className="flex-1">
-                                <FormLabel>Option Name</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="e.g. Size, Color"
-                                    {...field}
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            name={`variantOptions.${index}.values`}
-                            control={form.control}
-                            render={({ field }) => (
-                              <FormItem className="flex-1">
-                                <FormLabel>Option Values</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="e.g. S, M, L (comma separated)"
-                                    onChange={(e) =>
-                                      field.onChange(
-                                        e.target.value
-                                          .split(",")
-                                          .map((s) => s.trim())
-                                      )
-                                    }
-                                  />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => removeVariantOption(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}{" "}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          appendVariantOption({ name: "", values: [] })
-                        }
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add another option
-                      </Button>
-                    </div>{" "}
-                    {variantFields.length > 0 && (
-                      <div className="border rounded-lg overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Variant</TableHead>
-                              <TableHead>Price</TableHead>
-                              <TableHead>Cost</TableHead>
-                              <TableHead>SKU</TableHead>
-                              <TableHead>Barcode</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {variantFields.map((field, index) => (
-                              <TableRow key={field.id}>
-                                <TableCell className="font-medium">
-                                  {field.name}
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`variants.${index}.price`}
-                                    control={form.control}
-                                    render={({ field }) => (
-                                      <Input
-                                        type="number"
-                                        step="0.01"
-                                        {...field}
-                                        className="min-w-[100px]"
-                                      />
-                                    )}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`variants.${index}.cost_price`}
-                                    control={form.control}
-                                    render={({ field }) => (
-                                      <Input
-                                        type="number"
-                                        step="0.01"
-                                        {...field}
-                                        className="min-w-[100px]"
-                                      />
-                                    )}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`variants.${index}.sku`}
-                                    control={form.control}
-                                    render={({ field }) => (
-                                      <Input
-                                        {...field}
-                                        className="min-w-[120px]"
-                                      />
-                                    )}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <FormField
-                                    name={`variants.${index}.barcode_number`}
-                                    control={form.control}
-                                    render={({ field }) => {
-                                      const variantName =
-                                        variantFields[index].name;
-                                      const variantPrice = form.watch(
-                                        `variants.${index}.price`
-                                      );
-                                      const barcodeData = {
-                                        title: variantName,
-                                        price: variantPrice
-                                          ? `$${variantPrice}`
-                                          : "",
-                                        barcodeValue: field.value || "",
-                                      };
-                                      const handleDataChange = (newData) => {
-                                        field.onChange(newData.barcodeValue);
-                                      };
-                                      return (
-                                        <BarcodeGenerator
-                                          data={barcodeData}
-                                          onDataChange={handleDataChange}
-                                        />
-                                      );
-                                    }}
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            ))}{" "}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
+            {/* Advanced */}
+            {/* <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5" />
@@ -1046,7 +877,7 @@ export function ProductForm({ categories = [], brands = [], tenants = [] }) {
                   )}
                 />
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
 
           {/* --- RIGHT COLUMN: Sticky Sidebar --- */}
@@ -1166,6 +997,12 @@ export function ProductForm({ categories = [], brands = [], tenants = [] }) {
                   <CardTitle>Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  <Button
+                    type="submit"
+                    className="w-full bg-gray-700 hover:bg-gray-500"
+                  >
+                    Save Product & Create New
+                  </Button>
                   <Button type="submit" className="w-full">
                     Save Product
                   </Button>
