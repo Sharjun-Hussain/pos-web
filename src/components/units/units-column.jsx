@@ -1,7 +1,7 @@
-// app/organizations/organization-columns.tsx
 "use client";
 
-import { ArrowUpDown, MoreHorizontal, Building } from "lucide-react";
+// Added 'Box' for the unit icon
+import { ArrowUpDown, MoreHorizontal, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -13,10 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from "next/link";
 
-// Reusable Header Component (from your file)
+// Reusable Header Component
 const DataTableColumnHeader = ({ column, title }) => {
   return (
     <Button
@@ -29,8 +27,8 @@ const DataTableColumnHeader = ({ column, title }) => {
   );
 };
 
-// Notice this is now a function
-export const getSuppliersColumns = ({ onDelete, onToggleStatus }) => [
+// Renamed function
+export const getUnitColumns = ({ onDelete, onToggleStatus, onEdit }) => [
   {
     id: "select",
     header: ({ table }) => (
@@ -56,52 +54,45 @@ export const getSuppliersColumns = ({ onDelete, onToggleStatus }) => [
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Organization" />
+      <DataTableColumnHeader column={column} title="Unit" />
     ),
     cell: ({ row }) => {
-      const organization = row.original;
-      const logoUrl = organization.logo
-        ? `https://apipos.inzeedo.com/${organization.logo}`
-        : null;
+      // Renamed variable
+      const unit = row.original;
 
       return (
         <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={logoUrl} alt={organization.name} />
-            <AvatarFallback>
-              <Building className="h-5 w-5 text-muted-foreground" />
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
+            {/* Updated icon */}
+            <Box className="h-5 w-5 text-primary" />
+          </div>
           <div>
-            <div className="font-medium">{organization.name}</div>
-            <div className="text-sm text-muted-foreground">
-              {organization.email || "No email"}
-            </div>
+            {/* Updated variables */}
+            <div className="font-medium">{unit.name}</div>
+            <div className="text-sm text-muted-foreground">{unit.slug}</div>
           </div>
         </div>
       );
     },
   },
-  // ... all your other columns (city, is_multi_branch, etc.)
+  // --- NEW COLUMN ---
   {
-    accessorKey: "city",
+    accessorKey: "short_code",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="City" />
+      <DataTableColumnHeader column={column} title="Short Code" />
     ),
     cell: ({ row }) => {
-      const city = row.getValue("city");
-      return city || "Not specified";
+      return row.getValue("short_code");
     },
   },
   {
-    accessorKey: "is_multi_branch",
-    header: "Multi-Branch",
+    accessorKey: "description",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Description" />
+    ),
     cell: ({ row }) => {
-      return row.getValue("is_multi_branch") ? (
-        <Badge variant="default">Yes</Badge>
-      ) : (
-        <Badge variant="destructive">No</Badge>
-      );
+      const description = row.getValue("description");
+      return description || "No description";
     },
   },
   {
@@ -114,6 +105,15 @@ export const getSuppliersColumns = ({ onDelete, onToggleStatus }) => [
           {isActive ? "Active" : "Inactive"}
         </Badge>
       );
+    },
+  },
+  // --- NEW COLUMN ---
+  {
+    accessorKey: "is_base_unit",
+    header: "Type",
+    cell: ({ row }) => {
+      const isBase = row.getValue("is_base_unit");
+      return isBase ? <Badge variant="outline">Base Unit</Badge> : null;
     },
   },
   {
@@ -129,9 +129,9 @@ export const getSuppliersColumns = ({ onDelete, onToggleStatus }) => [
   {
     id: "actions",
     cell: ({ row }) => {
-      const organization = row.original;
+      // Renamed variable
+      const unit = row.original;
 
-      // The API logic is GONE. We just call the props.
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -142,21 +142,26 @@ export const getSuppliersColumns = ({ onDelete, onToggleStatus }) => [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <Link href={`/organizations/${organization.id}/edit`} passHref>
-              <DropdownMenuItem>Edit Settings</DropdownMenuItem>
-            </Link>
+
+            {/* Updated text and variable */}
+            <DropdownMenuItem onClick={() => onEdit(unit)}>
+              Edit Unit
+            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
+            {/* Updated variable */}
             <DropdownMenuItem
               className="text-red-800"
-              onClick={() => onDelete(organization.id)}
+              onClick={() => onDelete(unit.id)}
             >
               Delete
             </DropdownMenuItem>
+            {/* Updated variable */}
             <DropdownMenuItem
               className="text-red-500"
-              onClick={() => onToggleStatus(organization)}
+              onClick={() => onToggleStatus(unit)}
             >
-              {organization.is_active ? "Suspend" : "Activate"}
+              {unit.is_active ? "Deactivate" : "Activate"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

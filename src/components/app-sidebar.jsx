@@ -69,10 +69,6 @@ export function AppSidebar({ ...props }) {
             title: "Branch",
             url: "/branches",
           },
-          {
-            title: "Supplier",
-            url: "#",
-          },
 
           {
             title: "Account Detail",

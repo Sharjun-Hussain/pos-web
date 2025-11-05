@@ -1,13 +1,13 @@
-import SupplierPage from "@/components/purchase/suppliers/supplier-management";
+import UnitsPage from "@/components/units/main-category-management";
 import React from "react";
 
 const page = () => {
-  return <SupplierPage />;
+  return <UnitsPage />;
 };
 
 export default page;
 
 export const metadata = {
-  title: "Suppliers | EMI-POS  ",
+  title: "Units | EMI-POS  ",
   description: "Developed By : Inzeedo (PVT) Ltd.",
 };
