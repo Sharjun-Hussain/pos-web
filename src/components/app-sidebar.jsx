@@ -80,10 +80,10 @@ export function AppSidebar({ ...props }) {
           },
           {
             title: "Unit Measurement",
-            url: "#",
+            url: "/unit-measurement",
           },
           {
-            title: "Units",
+            title: "Unit",
             url: "/units",
           },
         ],
