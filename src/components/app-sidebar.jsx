@@ -83,8 +83,8 @@ export function AppSidebar({ ...props }) {
             url: "#",
           },
           {
-            title: "Unit Container",
-            url: "#",
+            title: "Units",
+            url: "/units",
           },
         ],
       },
