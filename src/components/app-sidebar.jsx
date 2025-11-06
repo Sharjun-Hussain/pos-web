@@ -140,7 +140,7 @@ export function AppSidebar({ ...props }) {
     Purchase: [
       {
         name: "Suppliers",
-        url: "/suppliers",
+        url: "/purchase/suppliers",
         icon: UsersRoundIcon,
       },
       {
