@@ -110,22 +110,22 @@ export function AppSidebar({ ...props }) {
           },
         ],
       },
-      {
-        title: "Analytics",
-        url: "#",
-        icon: ChartPie,
-        items: [
-          {
-            title: "Sales Reports",
-            url: "/analytics/sales-reports",
-          },
+      // {
+      //   title: "Analytics",
+      //   url: "#",
+      //   icon: ChartPie,
+      //   items: [
+      //     {
+      //       title: "Sales Reports",
+      //       url: "/analytics/sales-reports",
+      //     },
 
-          {
-            title: "Inventory Reports",
-            url: "/analytics/inventory-reports",
-          },
-        ],
-      },
+      //     {
+      //       title: "Inventory Reports",
+      //       url: "/analytics/inventory-reports",
+      //     },
+      //   ],
+      // },
     ],
     Core: [
       {
@@ -157,6 +157,11 @@ export function AppSidebar({ ...props }) {
       },
     ],
     Settings: [
+      {
+        name: "Reports",
+        url: "/reports",
+        icon: ChartPie,
+      },
       {
         name: "Settings",
         url: "/settings",
