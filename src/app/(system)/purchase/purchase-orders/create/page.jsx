@@ -571,7 +571,7 @@ export default function CreatePurchaseOrder() {
               <Save className="h-4 w-4" />
               Save Draft
             </Button>
-            <Button type="submit" className="gap-2 bg-gray-900 hover:bg-gray-800 text-white">
+            <Button type="submit" className="gap-2 ">
               <CheckCircle2 className="h-4 w-4" />
               Submit Purchase Order
             </Button>

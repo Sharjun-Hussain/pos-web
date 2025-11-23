@@ -11,10 +11,12 @@ import {
   GalleryVerticalEnd,
   Map,
   Origami,
+  PanelsTopLeft,
   PieChart,
   Settings,
   Settings2,
   SquareTerminal,
+  Users,
   UsersRoundIcon,
 } from "lucide-react";
 
@@ -164,6 +166,11 @@ export function AppSidebar({ ...props }) {
         name: "Organizations",
         url: "/organizations",
         icon: Origami,
+      },
+       {
+        name: "Internal Users",
+        url: "/users",
+        icon: Users,
       },
     ],
   };
