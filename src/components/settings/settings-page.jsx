@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BusinessSettings } from "./business-settings";
 import { ReceiptSettings } from "./receipt-settings";
-import { UserSettings } from "./user-settings";
+
 
 export function SettingsPage() {
   return (
@@ -21,7 +21,7 @@ export function SettingsPage() {
             <TabsTrigger value="business">Business</TabsTrigger>
 
             <TabsTrigger value="receipt">Receipts</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
+           
           </TabsList>
 
           <TabsContent value="business">
@@ -32,9 +32,7 @@ export function SettingsPage() {
             <ReceiptSettings />
           </TabsContent>
 
-          <TabsContent value="users">
-            <UserSettings />
-          </TabsContent>
+        
         </Tabs>
       </div>
     </div>
