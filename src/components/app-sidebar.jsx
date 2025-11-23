@@ -145,7 +145,7 @@ export function AppSidebar({ ...props }) {
       },
       {
         name: "Purchase Orders",
-        url: "/purchase-orders",
+        url: "/purchase/purchase-orders",
         icon: Bot,
       },
       {
