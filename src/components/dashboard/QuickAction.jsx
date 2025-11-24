@@ -64,7 +64,7 @@ const quickActions = [
     description: "Manage Barcode for Products",
     color: "bg-gray-500",
     soon: false,
-    href: "/barcodes", // Added href for navigation
+    href: "/barcode",
   },
 ];
 
