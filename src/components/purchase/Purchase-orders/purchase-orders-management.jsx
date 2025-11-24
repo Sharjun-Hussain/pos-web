@@ -225,11 +225,9 @@ export default function PurchaseOrderPage() {
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Employee Management
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Purchase Orders</h1>
           <p className="text-muted-foreground">
-            Manage your staff, roles, and permissions.
+            Manage your purchase orders and related tasks.
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -237,7 +235,7 @@ export default function PurchaseOrderPage() {
             <Download className="h-4 w-4" />
             Export
           </Button>
-          <Link href="/employees/new" passHref>
+          <Link href="/purchase/purchase-orders/create" passHref>
             {" "}
             {/* CHANGED: Link */}
             <Button
@@ -250,7 +248,7 @@ export default function PurchaseOrderPage() {
               ) : (
                 <PlusCircle className="h-4 w-4" />
               )}
-              Add Employee
+              Create Purchase
             </Button>
           </Link>
         </div>

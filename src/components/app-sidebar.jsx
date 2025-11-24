@@ -154,11 +154,11 @@ export function AppSidebar({ ...props }) {
         url: "/purchase/purchase-orders",
         icon: Bot,
       },
-      {
-        name: "Good Received Notes",
-        url: "/good-received-notes",
-        icon: Command,
-      },
+      // {
+      //   name: "Good Received Notes",
+      //   url: "/good-received-notes",
+      //   icon: Command,
+      // },
     ],
     Settings: [
       {
@@ -182,6 +182,13 @@ export function AppSidebar({ ...props }) {
         icon: Users,
       },
     ],
+    pos: [
+      {
+        name: "Point of Sale",
+        url: "/pos",
+        icon: AudioWaveform,
+      },
+    ],
   };
 
   return (
@@ -191,6 +198,7 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        <NavProjects projects={data.pos} type="pos" />
         <NavProjects projects={data.Core} label="Users Management" />
         <NavProjects projects={data.Purchase} label="Purchases" />
 

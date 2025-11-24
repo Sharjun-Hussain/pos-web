@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
-export function NavProjects({ projects, label }) {
+export function NavProjects({ projects, label, type }) {
   const { isMobile } = useSidebar();
 
   return (
@@ -20,7 +20,14 @@ export function NavProjects({ projects, label }) {
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <Link href={item.url}>
+              <Link
+                href={item.url}
+                className={`${
+                  type == "pos"
+                    ? "text-blue-600 border-blue-600 border hover:text-blue-500"
+                    : ""
+                }`}
+              >
                 <item.icon />
                 <span>{item.name}</span>
               </Link>
