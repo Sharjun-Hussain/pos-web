@@ -66,13 +66,13 @@ const REPORTS_DATA = [
     description: "Detailed sales performance breakdown per supplier.",
     isFavorite: false,
   },
-  {
-    id: "r4",
-    name: "Current Stock Value",
-    category: "Stocks",
-    description: "Total valuation of current inventory assets.",
-    isFavorite: true,
-  },
+  //   {
+  //     id: "r4",
+  //     name: "Current Stock Value",
+  //     category: "Stocks",
+  //     description: "Total valuation of current inventory assets.",
+  //     isFavorite: true,
+  //   },
   //   {
   //     id: "r4",
   //     name: "Profit & Loss Report",
@@ -80,34 +80,34 @@ const REPORTS_DATA = [
   //     description: "Summary of revenues, costs, and net expenses.",
   //     isFavorite: false,
   //   },
-  {
-    id: "r5",
-    name: "Customer Purchase History",
-    category: "Customer",
-    description: "View detailed purchase logs for each customer.",
-    isFavorite: false,
-  },
-  {
-    id: "r6",
-    name: "Low Stock Summary",
-    category: "Stocks",
-    description: "List of items below re-order level threshold.",
-    isFavorite: false,
-  },
-  {
-    id: "r7",
-    name: "Employee Salary Summary",
-    category: "Payroll",
-    description: "Breakdown of employee salaries and deductions.",
-    isFavorite: false,
-  },
-  {
-    id: "r8",
-    name: "Purchase Order Summary",
-    category: "Purchase",
-    description: "Status summary of all raised purchase orders.",
-    isFavorite: false,
-  },
+  //   {
+  //     id: "r5",
+  //     name: "Customer Purchase History",
+  //     category: "Customer",
+  //     description: "View detailed purchase logs for each customer.",
+  //     isFavorite: false,
+  //   },
+  //   {
+  //     id: "r6",
+  //     name: "Low Stock Summary",
+  //     category: "Stocks",
+  //     description: "List of items below re-order level threshold.",
+  //     isFavorite: false,
+  //   },
+  //   {
+  //     id: "r7",
+  //     name: "Employee Salary Summary",
+  //     category: "Payroll",
+  //     description: "Breakdown of employee salaries and deductions.",
+  //     isFavorite: false,
+  //   },
+  //   {
+  //     id: "r8",
+  //     name: "Purchase Order Summary",
+  //     category: "Purchase",
+  //     description: "Status summary of all raised purchase orders.",
+  //     isFavorite: false,
+  //   },
   //   {
   //     id: "r9",
   //     name: "Tax Liability Report",
@@ -115,21 +115,21 @@ const REPORTS_DATA = [
   //     description: "Calculated tax collected vs tax payable.",
   //     isFavorite: false,
   //   },
-  {
-    id: "r10",
-    name: "Supplier Performance",
-    category: "Purchase",
-    description: "Analysis of supplier delivery times and costs.",
-    isFavorite: false,
-  },
+  //   {
+  //     id: "r10",
+  //     name: "Supplier Performance",
+  //     category: "Purchase",
+  //     description: "Analysis of supplier delivery times and costs.",
+  //     isFavorite: false,
+  //   },
 ];
 
 const CATEGORIES = [
-  { id: "Stocks", label: "Stocks", icon: Package },
+  //   { id: "Stocks", label: "Stocks", icon: Package },
   { id: "Sales", label: "Sales", icon: BarChart3 },
-  { id: "Customer", label: "Customer", icon: Users },
+  //   { id: "Customer", label: "Customer", icon: Users },
   //   { id: "Payroll", label: "Payroll", icon: CreditCard },
-  { id: "Purchase", label: "Purchase", icon: ShoppingBag },
+  //   { id: "Purchase", label: "Purchase", icon: ShoppingBag },
 ];
 
 export default function ReportsHubPage() {
