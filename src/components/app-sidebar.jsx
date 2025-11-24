@@ -104,9 +104,13 @@ export function AppSidebar({ ...props }) {
             url: "/products",
           },
 
+          // {
+          //   title: "Inventory / Stock",
+          //   url: "/products/inventory",
+          // },
           {
-            title: "Inventory / Stock",
-            url: "/products/inventory",
+            title: "Barcodes",
+            url: "/barcode",
           },
         ],
       },
@@ -172,7 +176,7 @@ export function AppSidebar({ ...props }) {
         url: "/organizations",
         icon: Origami,
       },
-       {
+      {
         name: "Internal Users",
         url: "/users",
         icon: Users,
