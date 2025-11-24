@@ -26,12 +26,12 @@ export default function Dashboard() {
             {/* Quick Actions */}
             <QuickActions />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Recent Activity */}
+            {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
               <div className="lg:col-span-2">
                 <RecentActivity />
               </div>
-            </div>
+            </div> */}
           </div>
         )}
 
