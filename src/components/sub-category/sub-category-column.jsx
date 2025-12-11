@@ -28,7 +28,14 @@ const DataTableColumnHeader = ({ column, title }) => {
   );
 };
 
-export const getSubCategoryColumns = ({ onDelete, onToggleStatus, onEdit }) => [
+export const getSubCategoryColumns = ({
+  onDelete,
+  onToggleStatus,
+  onEdit,
+  canEdit = false,
+  canDelete = false,
+  canToggleStatus = false,
+}) => [
   {
     id: "select",
     header: ({ table }) => (
@@ -136,6 +143,8 @@ export const getSubCategoryColumns = ({ onDelete, onToggleStatus, onEdit }) => [
     cell: ({ row }) => {
       const subCategory = row.original;
 
+      if (!canEdit && !canDelete && !canToggleStatus) return null;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -147,23 +156,31 @@ export const getSubCategoryColumns = ({ onDelete, onToggleStatus, onEdit }) => [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-            <DropdownMenuItem onClick={() => onEdit(subCategory)}>
-              Edit Sub Category
-            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem onClick={() => onEdit(subCategory)}>
+                Edit Sub Category
+              </DropdownMenuItem>
+            )}
 
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-red-800"
-              onClick={() => onDelete(subCategory.id)}
-            >
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-500"
-              onClick={() => onToggleStatus(subCategory)}
-            >
-              {subCategory.is_active ? "Deactivate" : "Activate"}
-            </DropdownMenuItem>
+            {(canDelete || canToggleStatus) && <DropdownMenuSeparator />}
+
+            {canDelete && (
+              <DropdownMenuItem
+                className="text-red-800"
+                onClick={() => onDelete(subCategory.id)}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
+
+            {canToggleStatus && (
+              <DropdownMenuItem
+                className="text-red-500"
+                onClick={() => onToggleStatus(subCategory)}
+              >
+                {subCategory.is_active ? "Deactivate" : "Activate"}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -28,7 +28,14 @@ const DataTableColumnHeader = ({ column, title }) => {
   );
 };
 
-export const getBrandColumns = ({ onDelete, onToggleStatus, onEdit }) => [
+export const getBrandColumns = ({
+  onDelete,
+  onToggleStatus,
+  onEdit,
+  canEdit = false,
+  canDelete = false,
+  canToggleStatus = false,
+}) => [
   {
     id: "select",
     header: ({ table }) => (
@@ -109,6 +116,8 @@ export const getBrandColumns = ({ onDelete, onToggleStatus, onEdit }) => [
     cell: ({ row }) => {
       const brand = row.original;
 
+      if (!canEdit && !canDelete && !canToggleStatus) return null;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -120,23 +129,31 @@ export const getBrandColumns = ({ onDelete, onToggleStatus, onEdit }) => [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-            <DropdownMenuItem onClick={() => onEdit(brand)}>
-              Edit Brand
-            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem onClick={() => onEdit(brand)}>
+                Edit Brand
+              </DropdownMenuItem>
+            )}
 
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-red-800"
-              onClick={() => onDelete(brand.id)}
-            >
-              Delete Brand
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-500"
-              onClick={() => onToggleStatus(brand)}
-            >
-              {brand.is_active ? "Deactivate" : "Activate"}
-            </DropdownMenuItem>
+            {(canDelete || canToggleStatus) && <DropdownMenuSeparator />}
+
+            {canDelete && (
+              <DropdownMenuItem
+                className="text-red-800"
+                onClick={() => onDelete(brand.id)}
+              >
+                Delete Brand
+              </DropdownMenuItem>
+            )}
+
+            {canToggleStatus && (
+              <DropdownMenuItem
+                className="text-red-500"
+                onClick={() => onToggleStatus(brand)}
+              >
+                {brand.is_active ? "Deactivate" : "Activate"}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -32,6 +32,9 @@ export const getMeasurementUnitColumns = ({
   onDelete,
   onToggleStatus,
   onEdit,
+  canEdit = false,
+  canDelete = false,
+  canToggleStatus = false,
 }) => [
   {
     id: "select",
@@ -141,6 +144,8 @@ export const getMeasurementUnitColumns = ({
     cell: ({ row }) => {
       const unit = row.original; // Renamed from subCategory to unit
 
+      if (!canEdit && !canDelete && !canToggleStatus) return null;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -153,23 +158,31 @@ export const getMeasurementUnitColumns = ({
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
             {/* Updated labels and handlers */}
-            <DropdownMenuItem onClick={() => onEdit(unit)}>
-              Edit Unit
-            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem onClick={() => onEdit(unit)}>
+                Edit Unit
+              </DropdownMenuItem>
+            )}
 
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-red-800"
-              onClick={() => onDelete(unit.id)}
-            >
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-500"
-              onClick={() => onToggleStatus(unit)}
-            >
-              {unit.is_active ? "Deactivate" : "Activate"}
-            </DropdownMenuItem>
+            {(canDelete || canToggleStatus) && <DropdownMenuSeparator />}
+
+            {canDelete && (
+              <DropdownMenuItem
+                className="text-red-800"
+                onClick={() => onDelete(unit.id)}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
+
+            {canToggleStatus && (
+              <DropdownMenuItem
+                className="text-red-500"
+                onClick={() => onToggleStatus(unit)}
+              >
+                {unit.is_active ? "Deactivate" : "Activate"}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

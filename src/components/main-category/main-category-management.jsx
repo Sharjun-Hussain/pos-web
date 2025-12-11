@@ -15,6 +15,7 @@ import OrganizationPageSkeleton from "@/app/skeletons/Organization-skeleton";
 import { ResourceManagementLayout } from "../general/resource-management-layout";
 import { getMainCategoryColumns } from "./main-category-column";
 import { MainCategoryDialog } from "./main-category-dialog";
+import { usePermission } from "@/hooks/use-permission";
 
 // --- FIX 1: Define this component OUTSIDE the main function ---
 // This prevents React from redefining the component on every single render.
@@ -60,6 +61,13 @@ export default function MainCategoryPage() {
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermission();
+
+  // Permissions
+  const canCreate = hasPermission("Main Category Create");
+  const canEdit = hasPermission("Main Category Edit");
+  const canDelete = hasPermission("Main Category Delete");
+  const canToggleStatus = hasPermission("Main Category Status");
 
   // 1. Safe Auth Check
   useEffect(() => {
@@ -198,7 +206,10 @@ export default function MainCategoryPage() {
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  }), [handleDelete, handleToggleStatus, handleEditClick]);
+    canEdit,
+    canDelete,
+    canToggleStatus,
+  }), [handleDelete, handleToggleStatus, handleEditClick, canEdit, canDelete, canToggleStatus]);
 
   // --- FIX 3: Memoize Bulk Actions Component ---
   // Prevents the Layout from thinking the component changed, which stops the infinite loop
@@ -221,7 +232,7 @@ export default function MainCategoryPage() {
         headerTitle="Main Category Management"
         headerDescription="Manage your main categories, branches, and settings."
         addButtonLabel="Add Main Category"
-        onAddClick={handleAddClick}
+        onAddClick={canCreate ? handleAddClick : null}
         isAdding={isNavigating}
         bulkActionsComponent={bulkActionsComponent} // Passing the stable object
         searchColumn="name"
