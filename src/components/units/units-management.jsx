@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -13,15 +13,18 @@ import {
 import { Button } from "@/components/ui/button";
 import OrganizationPageSkeleton from "@/app/skeletons/Organization-skeleton";
 import { ResourceManagementLayout } from "../general/resource-management-layout";
-// Import the new dialog and column definitions for Units
-import { UnitDialog } from "./units-dialog"; // Renamed from MainCategoryDialog
-import { getUnitColumns } from "./units-column"; // Renamed from getMainCategoryColumns
+import { UnitDialog } from "./units-dialog";
+import { getUnitColumns } from "./units-column";
 
-// Renamed component
+// --- FIX 1: Component defined outside with safety check ---
 const UnitBulkActions = ({ table, onDelete, onDeactivate }) => {
+  // Guard clause: prevents crashes if table isn't ready
+  if (!table) return null;
+
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedIds = selectedRows.map((row) => row.original.id);
   const numSelected = selectedIds.length;
+
   const handleDeactivate = () => {
     onDeactivate(selectedIds);
     table.resetRowSelection();
@@ -51,20 +54,17 @@ const UnitBulkActions = ({ table, onDelete, onDeactivate }) => {
   );
 };
 
-// The Main Page Component - still named UnitsPage, which is now correct.
 export default function UnitsPage() {
   const [isNavigating, setIsNavigating] = useState(false);
-  // State renamed
   const [units, setUnits] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // State renamed
   const [editingUnit, setEditingUnit] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Auth logic remains the same
+  // 1. Auth Check
   useEffect(() => {
     if (status === "unauthenticated") {
       const returnUrl = window.location.pathname + window.location.search;
@@ -72,13 +72,12 @@ export default function UnitsPage() {
     }
   }, [router, status]);
 
-  // Renamed function and state
-  const fetchUnits = async () => {
+  // 2. Data Fetching (Wrapped in useCallback)
+  const fetchUnits = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
       setLoading(true);
       setError(null);
-      // This fetch URL was already correct
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/units`,
         {
@@ -90,7 +89,7 @@ export default function UnitsPage() {
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       if (data.status === "success") {
-        setUnits(data.data.data); // Use setUnits
+        setUnits(data.data.data || []);
       } else {
         throw new Error(data.message || "Failed to fetch");
       }
@@ -99,41 +98,38 @@ export default function UnitsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.accessToken]);
 
   useEffect(() => {
     if (status === "authenticated") {
-      fetchUnits(); // Call fetchUnits
+      fetchUnits();
     }
-  }, [status, session]); // Re-run when session is ready
+  }, [status, fetchUnits]);
 
-  const handleAddClick = () => {
-    setEditingUnit(null); // Use setEditingUnit
+  // 3. Handlers (Wrapped in useCallback)
+  const handleAddClick = useCallback(() => {
+    setEditingUnit(null);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  // Parameter renamed from 'category' to 'unit'
-  const handleEditClick = (unit) => {
-    setEditingUnit(unit); // Use setEditingUnit
+  const handleEditClick = useCallback((unit) => {
+    setEditingUnit(unit);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  // Dialog success handler updated
-  const handleDialogSuccess = () => {
+  const handleDialogSuccess = useCallback(() => {
     setIsDialogOpen(false);
-    setEditingUnit(null); // Clear editing state
-    fetchUnits(); // Refetch the data
-  };
+    setEditingUnit(null);
+    fetchUnits();
+  }, [fetchUnits]);
 
-  // Dialog close handler updated
-  const handleDialogClose = () => {
-    if (isDialogOpen) {
-      setIsDialogOpen(false);
-      setEditingUnit(null); // Always clear state on close
-    }
-  };
+  // --- FIX 2: Correct Dialog Closing Logic ---
+  const handleDialogClose = useCallback((open) => {
+    setIsDialogOpen(open);
+    if (!open) setEditingUnit(null);
+  }, []);
 
-  const handleDelete = async (ids) => {
+  const handleDelete = useCallback(async (ids) => {
     const isBulk = Array.isArray(ids);
     const idsToDelete = isBulk ? ids : [ids];
 
@@ -141,7 +137,6 @@ export default function UnitsPage() {
       Promise.all(
         idsToDelete.map((id) =>
           fetch(
-            // API endpoint changed
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/units/${id}`,
             {
               method: "DELETE",
@@ -153,20 +148,18 @@ export default function UnitsPage() {
       {
         loading: "Deleting...",
         success: () => {
-          fetchUnits(); // Refetch data
-          return "Unit(s) deleted successfully!"; // Text changed
+          fetchUnits();
+          return "Unit(s) deleted successfully!";
         },
         error: "Failed to delete.",
       }
     );
-  };
+  }, [session, fetchUnits]);
 
-  // Parameter renamed from 'main_category' to 'unit'
-  const handleToggleStatus = async (unit) => {
+  const handleToggleStatus = useCallback(async (unit) => {
     const action = unit.is_active ? "deactivate" : "activate";
     toast.promise(
       fetch(
-        // API endpoint changed
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/units/${unit.id}/${action}`,
         {
           method: "PATCH",
@@ -176,21 +169,19 @@ export default function UnitsPage() {
       {
         loading: `${action === "activate" ? "Activating" : "Suspending"}...`,
         success: () => {
-          fetchUnits(); // Refetch data
-          // Text changed
+          fetchUnits();
           return `Unit ${unit.name} ${action}d successfully!`;
         },
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchUnits]);
 
-  const handleBulkDeactivate = async (ids) => {
+  const handleBulkDeactivate = useCallback(async (ids) => {
     toast.promise(
       Promise.all(
         ids.map((id) =>
           fetch(
-            // API endpoint changed
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/units/${id}/deactivate`,
             {
               method: "PATCH",
@@ -202,55 +193,56 @@ export default function UnitsPage() {
       {
         loading: "Deactivating...",
         success: () => {
-          fetchUnits(); // Refetch data
-          return "Unit(s) deactivated successfully!"; // Text changed
+          fetchUnits();
+          return "Unit(s) deactivated successfully!";
         },
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchUnits]);
 
-  // Get columns for Units
-  const columns = getUnitColumns({
+  // --- FIX 3: Memoize Columns ---
+  const columns = useMemo(() => getUnitColumns({
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  });
+  }), [handleDelete, handleToggleStatus, handleEditClick]);
+
+  // --- FIX 4: Memoize Bulk Actions Component ---
+  // This prevents the infinite loop/freeze
+  const bulkActionsComponent = useMemo(() => (
+    <UnitBulkActions
+      onDelete={handleDelete}
+      onDeactivate={handleBulkDeactivate}
+    />
+  ), [handleDelete, handleBulkDeactivate]);
 
   return (
     <>
       <ResourceManagementLayout
-        data={units} // Pass units data
+        data={units}
         columns={columns}
         isLoading={loading || status === "loading"}
         isError={!!error}
         errorMessage={error}
-        onRetry={fetchUnits} // Pass fetchUnits
-        headerTitle="Unit Management" // Text changed
-        headerDescription="Manage your units, branches, and settings." // Text changed
-        addButtonLabel="Add Unit" // Text changed
+        onRetry={fetchUnits}
+        headerTitle="Unit Management"
+        headerDescription="Manage your units, branches, and settings."
+        addButtonLabel="Add Unit"
         onAddClick={handleAddClick}
         isAdding={isNavigating}
         onExportClick={() => console.log("Export clicked")}
-        bulkActionsComponent={
-          // Use renamed component
-          <UnitBulkActions
-            onDelete={handleDelete}
-            onDeactivate={handleBulkDeactivate}
-          />
-        }
+        bulkActionsComponent={bulkActionsComponent} // Use the memoized variable
         searchColumn="name"
-        searchPlaceholder="Filter unit by name..." // Text changed
+        searchPlaceholder="Filter unit by name..."
         loadingSkeleton={<OrganizationPageSkeleton />}
-        // filterComponents={(table) => <OrganizationFilters table={table} />}
       />
-      {/* Use UnitDialog component */}
       <UnitDialog
         open={isDialogOpen}
-        onOpenChange={handleDialogClose}
+        onOpenChange={handleDialogClose} // Use fixed handler
         onSuccess={handleDialogSuccess}
         session={session}
-        initialData={editingUnit} // Pass editingUnit
+        initialData={editingUnit}
       />
     </>
   );

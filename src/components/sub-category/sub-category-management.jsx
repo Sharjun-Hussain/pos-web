@@ -1,4 +1,3 @@
-// app/sub_categorys/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -17,20 +16,13 @@ import { ResourceManagementLayout } from "../general/resource-management-layout"
 import { getSubCategoryColumns } from "./sub-category-column";
 import { SubCategoryDialog } from "./sub-category-dialog";
 
+// --- FIX 1: Component defined outside with safety check ---
 const SubCategoryBulkActions = ({ table, onDelete, onDeactivate }) => {
+  if (!table) return null;
+
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedIds = selectedRows.map((row) => row.original.id);
   const numSelected = selectedIds.length;
-
-  const handleDeactivate = () => {
-    onDeactivate(selectedIds);
-    table.resetRowSelection();
-  };
-
-  const handleDelete = () => {
-    onDelete(selectedIds);
-    table.resetRowSelection();
-  };
 
   return (
     <DropdownMenu>
@@ -40,10 +32,16 @@ const SubCategoryBulkActions = ({ table, onDelete, onDeactivate }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleDeactivate}>
+        <DropdownMenuItem onClick={() => {
+            onDeactivate(selectedIds);
+            table.resetRowSelection();
+        }}>
           Deactivate Selected
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-red-500" onClick={handleDelete}>
+        <DropdownMenuItem className="text-red-500" onClick={() => {
+            onDelete(selectedIds);
+            table.resetRowSelection();
+        }}>
           Delete Selected
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -51,7 +49,6 @@ const SubCategoryBulkActions = ({ table, onDelete, onDeactivate }) => {
   );
 };
 
-// 4. The Main Page Component
 export default function SubCategoryPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [SubCategories, setSubCategories] = useState([]);
@@ -62,7 +59,7 @@ export default function SubCategoryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // 5. Auth and Data Fetching Logic STAYS here
+  // 1. Auth Check
   useEffect(() => {
     if (status === "unauthenticated") {
       const returnUrl = window.location.pathname + window.location.search;
@@ -70,6 +67,7 @@ export default function SubCategoryPage() {
     }
   }, [router, status]);
 
+  // 2. Data Fetching
   const fetchSubCategories = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
@@ -85,8 +83,9 @@ export default function SubCategoryPage() {
       );
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
+      
       if (data.status === "success") {
-        setSubCategories(data.data.data);
+        setSubCategories(data.data.data || []);
       } else {
         throw new Error(data.message || "Failed to fetch");
       }
@@ -95,7 +94,7 @@ export default function SubCategoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [session?.accessToken]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -103,28 +102,29 @@ export default function SubCategoryPage() {
     }
   }, [status, fetchSubCategories]);
 
-  const handleAddClick = () => {
+  // 3. Handlers
+  const handleAddClick = useCallback(() => {
     setEditingCategory(null);
     setIsDialogOpen(true);
-  };
+  }, []);
 
   const handleEditClick = useCallback((category) => {
     setEditingCategory(category);
     setIsDialogOpen(true);
   }, []);
 
-  const handleDialogSuccess = () => {
+  const handleDialogSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setEditingCategory(null);
     fetchSubCategories();
-  };
+  }, [fetchSubCategories]);
 
-  const handleDialogClose = () => {
-    if (isDialogOpen) {
-      setIsDialogOpen(false);
-      setEditingCategory(null);
-    }
-  };
+  // --- FIX 2: Correct Dialog Closing Logic ---
+  const handleDialogClose = useCallback((open) => {
+    setIsDialogOpen(open);
+    if (!open) setEditingCategory(null);
+  }, []);
+
   const handleDelete = useCallback(async (ids) => {
     const isBulk = Array.isArray(ids);
     const idsToDelete = isBulk ? ids : [ids];
@@ -165,7 +165,7 @@ export default function SubCategoryPage() {
       {
         loading: `${action === "activate" ? "Activating" : "Suspending"}...`,
         success: () => {
-          fetchSubCategories(); // Refetch data
+          fetchSubCategories(); 
           return `Sub Category ${sub_category.name} ${action}d successfully!`;
         },
         error: "Action failed.",
@@ -189,7 +189,7 @@ export default function SubCategoryPage() {
       {
         loading: "Deactivating...",
         success: () => {
-          fetchSubCategories(); // Refetch data
+          fetchSubCategories(); 
           return "Sub Category(s) deactivated successfully!";
         },
         error: "Action failed.",
@@ -197,12 +197,21 @@ export default function SubCategoryPage() {
     );
   }, [session, fetchSubCategories]);
 
-  // 7. Get the columns by passing the handlers
+  // 4. Memoize Columns
   const columns = useMemo(() => getSubCategoryColumns({
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
   }), [handleDelete, handleToggleStatus, handleEditClick]);
+
+  // --- FIX 3: Memoize Bulk Actions Component ---
+  // This prevents the infinite loop freeze
+  const bulkActionsComponent = useMemo(() => (
+    <SubCategoryBulkActions
+      onDelete={handleDelete}
+      onDeactivate={handleBulkDeactivate}
+    />
+  ), [handleDelete, handleBulkDeactivate]);
 
   return (
     <>
@@ -217,23 +226,16 @@ export default function SubCategoryPage() {
         headerDescription="Manage your sub categories, branches, and settings."
         addButtonLabel="Add Sub Category"
         onAddClick={handleAddClick}
-        isAdding={isDialogOpen}
+        isAdding={isNavigating}
         onExportClick={() => console.log("Export clicked")}
-        // statCardsComponent={statCards}
-        bulkActionsComponent={
-          <SubCategoryBulkActions
-            onDelete={handleDelete}
-            onDeactivate={handleBulkDeactivate}
-          />
-        }
+        bulkActionsComponent={bulkActionsComponent} // Use the memoized component
         searchColumn="name"
         searchPlaceholder="Filter sub category by name..."
         loadingSkeleton={<OrganizationPageSkeleton />}
-        // filterComponents={(table) => <OrganizationFilters table={table} />}
       />
       <SubCategoryDialog
         open={isDialogOpen}
-        onOpenChange={handleDialogClose}
+        onOpenChange={handleDialogClose} // Use fixed handler
         onSuccess={handleDialogSuccess}
         session={session}
         initialData={editingCategory}

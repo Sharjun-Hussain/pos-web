@@ -19,19 +19,11 @@ import { MeasurementUnitDialog } from "./unit-measurement-dialog";
 import { getMeasurementUnitColumns } from "./unit-measuremrent -column";
 // --- 2. Renamed Bulk Actions Component ---
 const UnitMeasurementBulkActions = ({ table, onDelete, onDeactivate }) => {
+  if (!table) return null;
+
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedIds = selectedRows.map((row) => row.original.id);
   const numSelected = selectedIds.length;
-
-  const handleDeactivate = () => {
-    onDeactivate(selectedIds);
-    table.resetRowSelection();
-  };
-
-  const handleDelete = () => {
-    onDelete(selectedIds);
-    table.resetRowSelection();
-  };
 
   return (
     <DropdownMenu>
@@ -41,10 +33,16 @@ const UnitMeasurementBulkActions = ({ table, onDelete, onDeactivate }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleDeactivate}>
+        <DropdownMenuItem onClick={() => {
+            onDeactivate(selectedIds);
+            table.resetRowSelection();
+        }}>
           Deactivate Selected
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-red-500" onClick={handleDelete}>
+        <DropdownMenuItem className="text-red-500" onClick={() => {
+            onDelete(selectedIds);
+            table.resetRowSelection();
+        }}>
           Delete Selected
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -91,7 +89,7 @@ export default function MeasurementUnitPage() {
       if (!response.ok) throw new Error("Failed to fetch measurement units");
       const data = await response.json();
       if (data.status === "success") {
-        setMeasurementUnits(data.data.data); // Set the correct state
+        setMeasurementUnits(data.data.data || []); // Set the correct state
       } else {
         throw new Error(data.message || "Failed to fetch");
       }
@@ -100,7 +98,7 @@ export default function MeasurementUnitPage() {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [session?.accessToken]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -109,28 +107,26 @@ export default function MeasurementUnitPage() {
   }, [status, fetchMeasurementUnits]);
 
   // --- 6. Updated Click Handlers ---
-  const handleAddClick = () => {
+  const handleAddClick = useCallback(() => {
     setEditingUnit(null); // Use renamed state
     setIsDialogOpen(true);
-  };
+  }, []);
 
   const handleEditClick = useCallback((unit) => {
     setEditingUnit(unit); // Use renamed state
     setIsDialogOpen(true);
   }, []);
 
-  const handleDialogSuccess = () => {
+  const handleDialogSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setEditingUnit(null); // Use renamed state
     fetchMeasurementUnits(); // Call renamed function
-  };
+  }, [fetchMeasurementUnits]);
 
-  const handleDialogClose = () => {
-    if (isDialogOpen) {
-      setIsDialogOpen(false);
-      setEditingUnit(null); // Use renamed state
-    }
-  };
+  const handleDialogClose = useCallback((open) => {
+    setIsDialogOpen(open);
+    if (!open) setEditingUnit(null); // Use renamed state
+  }, []);
 
   // --- 7. Updated Delete Handler ---
   const handleDelete = useCallback(async (ids) => {
@@ -145,7 +141,7 @@ export default function MeasurementUnitPage() {
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/measurement-units/${id}`,
             {
               method: "DELETE",
-              headers: { Authorization: `Bearer ${session.accessToken}` },
+              headers: { Authorization: `Bearer ${session?.accessToken}` },
             }
           )
         )
@@ -159,7 +155,7 @@ export default function MeasurementUnitPage() {
         error: "Failed to delete.",
       }
     );
-  }, [session, fetchMeasurementUnits]);
+  }, [session?.accessToken, fetchMeasurementUnits]);
 
   // --- 8. Updated Toggle Status Handler ---
   const handleToggleStatus = useCallback(async (unit) => {
@@ -170,7 +166,7 @@ export default function MeasurementUnitPage() {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/measurement-units/${unit.id}/${action}`,
         {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${session.accessToken}` },
+          headers: { Authorization: `Bearer ${session?.accessToken}` },
         }
       ),
       {
@@ -182,7 +178,7 @@ export default function MeasurementUnitPage() {
         error: "Action failed.",
       }
     );
-  }, [session, fetchMeasurementUnits]);
+  }, [session?.accessToken, fetchMeasurementUnits]);
 
   // --- 9. Updated Bulk Deactivate Handler ---
   const handleBulkDeactivate = useCallback(async (ids) => {
@@ -194,7 +190,7 @@ export default function MeasurementUnitPage() {
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/measurement-units/${id}/deactivate`,
             {
               method: "PATCH",
-              headers: { Authorization: `Bearer ${session.accessToken}` },
+              headers: { Authorization: `Bearer ${session?.accessToken}` },
             }
           )
         )
@@ -208,7 +204,7 @@ export default function MeasurementUnitPage() {
         error: "Action failed.",
       }
     );
-  }, [session, fetchMeasurementUnits]);
+  }, [session?.accessToken, fetchMeasurementUnits]);
 
   // --- 10. Get Columns ---
   const columns = useMemo(() => getMeasurementUnitColumns({
@@ -216,6 +212,13 @@ export default function MeasurementUnitPage() {
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
   }), [handleDelete, handleToggleStatus, handleEditClick]);
+
+  const bulkActionsComponent = useMemo(() => (
+    <UnitMeasurementBulkActions
+      onDelete={handleDelete}
+      onDeactivate={handleBulkDeactivate}
+    />
+  ), [handleDelete, handleBulkDeactivate]);
 
   return (
     <>
@@ -233,12 +236,7 @@ export default function MeasurementUnitPage() {
         onAddClick={handleAddClick}
         isAdding={isDialogOpen}
         onExportClick={() => console.log("Export clicked")}
-        bulkActionsComponent={
-          <UnitMeasurementBulkActions
-            onDelete={handleDelete}
-            onDeactivate={handleBulkDeactivate}
-          />
-        }
+        bulkActionsComponent={bulkActionsComponent}
         searchColumn="name"
         searchPlaceholder="Filter units by name..."
         loadingSkeleton={<OrganizationPageSkeleton />}

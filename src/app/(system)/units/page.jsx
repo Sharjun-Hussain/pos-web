@@ -1,4 +1,4 @@
-import UnitsPage from "@/components/units/main-category-management";
+import UnitsPage from "@/components/units/units-management";
 import React from "react";
 
 const page = () => {

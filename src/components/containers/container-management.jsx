@@ -1,7 +1,6 @@
-// app/containers/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -17,20 +16,14 @@ import { ResourceManagementLayout } from "../general/resource-management-layout"
 import { getContainerColumns } from "./container-column";
 import { ContainerDialog } from "./container-dialog";
 
+// --- FIX 1: Component defined outside with safety check ---
 const ContainerBulkActions = ({ table, onDelete, onDeactivate }) => {
+  // Guard clause: prevents crashes if table isn't ready
+  if (!table) return null;
+
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedIds = selectedRows.map((row) => row.original.id);
   const numSelected = selectedIds.length;
-
-  const handleDeactivate = () => {
-    onDeactivate(selectedIds);
-    table.resetRowSelection();
-  };
-
-  const handleDelete = () => {
-    onDelete(selectedIds);
-    table.resetRowSelection();
-  };
 
   return (
     <DropdownMenu>
@@ -40,10 +33,16 @@ const ContainerBulkActions = ({ table, onDelete, onDeactivate }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleDeactivate}>
+        <DropdownMenuItem onClick={() => {
+            onDeactivate(selectedIds);
+            table.resetRowSelection();
+        }}>
           Deactivate Selected
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-red-500" onClick={handleDelete}>
+        <DropdownMenuItem className="text-red-500" onClick={() => {
+            onDelete(selectedIds);
+            table.resetRowSelection();
+        }}>
           Delete Selected
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -51,7 +50,6 @@ const ContainerBulkActions = ({ table, onDelete, onDeactivate }) => {
   );
 };
 
-// The Main Page Component
 export default function ContainerPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [containers, setContainers] = useState([]);
@@ -62,7 +60,7 @@ export default function ContainerPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Auth and Data Fetching Logic
+  // 1. Auth Check
   useEffect(() => {
     if (status === "unauthenticated") {
       const returnUrl = window.location.pathname + window.location.search;
@@ -70,7 +68,8 @@ export default function ContainerPage() {
     }
   }, [router, status]);
 
-  const fetchContainers = async () => {
+  // 2. Data Fetching (Wrapped in useCallback)
+  const fetchContainers = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
       setLoading(true);
@@ -86,7 +85,7 @@ export default function ContainerPage() {
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       if (data.status === "success") {
-        setContainers(data.data.data);
+        setContainers(data.data.data || []);
       } else {
         throw new Error(data.message || "Failed to fetch");
       }
@@ -95,38 +94,38 @@ export default function ContainerPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.accessToken]);
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchContainers();
     }
-  }, [status, session]);
+  }, [status, fetchContainers]);
 
-  const handleAddClick = () => {
+  // 3. Handlers (Wrapped in useCallback)
+  const handleAddClick = useCallback(() => {
     setEditingContainer(null);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  const handleEditClick = (container) => {
+  const handleEditClick = useCallback((container) => {
     setEditingContainer(container);
     setIsDialogOpen(true);
-  };
+  }, []);
 
-  const handleDialogSuccess = () => {
+  const handleDialogSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setEditingContainer(null);
     fetchContainers();
-  };
+  }, [fetchContainers]);
 
-  const handleDialogClose = () => {
-    if (isDialogOpen) {
-      setIsDialogOpen(false);
-      setEditingContainer(null);
-    }
-  };
+  // --- FIX 2: Correct Dialog Closing Logic ---
+  const handleDialogClose = useCallback((open) => {
+    setIsDialogOpen(open);
+    if (!open) setEditingContainer(null);
+  }, []);
 
-  const handleDelete = async (ids) => {
+  const handleDelete = useCallback(async (ids) => {
     const isBulk = Array.isArray(ids);
     const idsToDelete = isBulk ? ids : [ids];
 
@@ -148,9 +147,9 @@ export default function ContainerPage() {
         error: "Failed to delete.",
       }
     );
-  };
+  }, [session, fetchContainers]);
 
-  const handleToggleStatus = async (container) => {
+  const handleToggleStatus = useCallback(async (container) => {
     const action = container.is_active ? "deactivate" : "activate";
     toast.promise(
       fetch(
@@ -169,9 +168,9 @@ export default function ContainerPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchContainers]);
 
-  const handleBulkDeactivate = async (ids) => {
+  const handleBulkDeactivate = useCallback(async (ids) => {
     toast.promise(
       Promise.all(
         ids.map((id) =>
@@ -193,14 +192,23 @@ export default function ContainerPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchContainers]);
 
-  // Get the columns by passing the handlers
-  const columns = getContainerColumns({
+  // --- FIX 3: Memoize Columns ---
+  const columns = useMemo(() => getContainerColumns({
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  });
+  }), [handleDelete, handleToggleStatus, handleEditClick]);
+
+  // --- FIX 4: Memoize Bulk Actions Component ---
+  // This prevents the infinite loop/freeze
+  const bulkActionsComponent = useMemo(() => (
+    <ContainerBulkActions
+      onDelete={handleDelete}
+      onDeactivate={handleBulkDeactivate}
+    />
+  ), [handleDelete, handleBulkDeactivate]);
 
   return (
     <>
@@ -215,21 +223,16 @@ export default function ContainerPage() {
         headerDescription="Manage your containers, capacity, and settings."
         addButtonLabel="Add Container"
         onAddClick={handleAddClick}
-        isAdding={isDialogOpen}
+        isAdding={isNavigating}
         onExportClick={() => console.log("Export clicked")}
-        bulkActionsComponent={
-          <ContainerBulkActions
-            onDelete={handleDelete}
-            onDeactivate={handleBulkDeactivate}
-          />
-        }
+        bulkActionsComponent={bulkActionsComponent} // Use the memoized variable
         searchColumn="name"
         searchPlaceholder="Filter containers by name..."
         loadingSkeleton={<OrganizationPageSkeleton />}
       />
       <ContainerDialog
         open={isDialogOpen}
-        onOpenChange={handleDialogClose}
+        onOpenChange={handleDialogClose} // Use fixed handler
         onSuccess={handleDialogSuccess}
         session={session}
         initialData={editingContainer}

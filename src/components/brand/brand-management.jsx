@@ -21,19 +21,11 @@ import { BrandDialog } from "./brand-dialog";
 
 // --- 2. RENAMED COMPONENT ---
 const BrandBulkActions = ({ table, onDelete, onDeactivate }) => {
+  if (!table) return null;
+
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const selectedIds = selectedRows.map((row) => row.original.id);
   const numSelected = selectedIds.length;
-
-  const handleDeactivate = () => {
-    onDeactivate(selectedIds);
-    table.resetRowSelection();
-  };
-
-  const handleDelete = () => {
-    onDelete(selectedIds);
-    table.resetRowSelection();
-  };
 
   return (
     <DropdownMenu>
@@ -43,10 +35,16 @@ const BrandBulkActions = ({ table, onDelete, onDeactivate }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleDeactivate}>
+        <DropdownMenuItem onClick={() => {
+            onDeactivate(selectedIds);
+            table.resetRowSelection();
+        }}>
           Deactivate Selected
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-red-500" onClick={handleDelete}>
+        <DropdownMenuItem className="text-red-500" onClick={() => {
+            onDelete(selectedIds);
+            table.resetRowSelection();
+        }}>
           Delete Selected
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -74,7 +72,6 @@ export default function BrandPage() {
   }, [router, status]);
 
   // --- 5. UPDATED FETCH LOGIC ---
-  // --- 5. UPDATED FETCH LOGIC ---
   const fetchBrands = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
@@ -91,7 +88,7 @@ export default function BrandPage() {
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       if (data.status === "success") {
-        setBrands(data.data.data); // Updated state
+        setBrands(data.data.data || []); // Updated state
       } else {
         throw new Error(data.message || "Failed to fetch");
       }
@@ -100,7 +97,7 @@ export default function BrandPage() {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [session?.accessToken]);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -109,28 +106,26 @@ export default function BrandPage() {
   }, [status, fetchBrands]);
 
   // --- 6. UPDATED DIALOG HANDLERS ---
-  const handleAddClick = () => {
+  const handleAddClick = useCallback(() => {
     setEditingBrand(null); // Updated state
     setIsDialogOpen(true);
-  };
+  }, []);
 
   const handleEditClick = useCallback((brand) => {
     setEditingBrand(brand); // Updated state
     setIsDialogOpen(true);
   }, []);
 
-  const handleDialogSuccess = () => {
+  const handleDialogSuccess = useCallback(() => {
     setIsDialogOpen(false);
     setEditingBrand(null); // Updated state
     fetchBrands(); // Updated function call
-  };
+  }, [fetchBrands]);
 
-  const handleDialogClose = () => {
-    if (isDialogOpen) {
-      setIsDialogOpen(false);
-      setEditingBrand(null); // Updated state
-    }
-  };
+  const handleDialogClose = useCallback((open) => {
+    setIsDialogOpen(open);
+    if (!open) setEditingBrand(null);
+  }, []);
 
   // --- 7. UPDATED API HANDLERS ---
   const handleDelete = useCallback(async (ids) => {
@@ -144,7 +139,7 @@ export default function BrandPage() {
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/brands/${id}`, // Updated endpoint
             {
               method: "DELETE",
-              headers: { Authorization: `Bearer ${session.accessToken}` },
+              headers: { Authorization: `Bearer ${session?.accessToken}` },
             }
           )
         )
@@ -158,7 +153,7 @@ export default function BrandPage() {
         error: "Failed to delete.",
       }
     );
-  }, [session, fetchBrands]);
+  }, [session?.accessToken, fetchBrands]);
 
   const handleToggleStatus = useCallback(async (brand) => {
     const action = brand.is_active ? "deactivate" : "activate";
@@ -167,7 +162,7 @@ export default function BrandPage() {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/brands/${brand.id}/${action}`, // Updated endpoint
         {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${session.accessToken}` },
+          headers: { Authorization: `Bearer ${session?.accessToken}` },
         }
       ),
       {
@@ -179,7 +174,7 @@ export default function BrandPage() {
         error: "Action failed.",
       }
     );
-  }, [session, fetchBrands]);
+  }, [session?.accessToken, fetchBrands]);
 
   const handleBulkDeactivate = useCallback(async (ids) => {
     toast.promise(
@@ -189,7 +184,7 @@ export default function BrandPage() {
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/brands/${id}/deactivate`, // Updated endpoint
             {
               method: "PATCH",
-              headers: { Authorization: `Bearer ${session.accessToken}` },
+              headers: { Authorization: `Bearer ${session?.accessToken}` },
             }
           )
         )
@@ -203,7 +198,7 @@ export default function BrandPage() {
         error: "Action failed.",
       }
     );
-  }, [session, fetchBrands]);
+  }, [session?.accessToken, fetchBrands]);
 
   // 7. Get the columns by passing the handlers
   const columns = useMemo(() => getBrandColumns({
@@ -212,6 +207,13 @@ export default function BrandPage() {
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
   }), [handleDelete, handleToggleStatus, handleEditClick]);
+
+  const bulkActionsComponent = useMemo(() => (
+    <BrandBulkActions // Updated component
+      onDelete={handleDelete}
+      onDeactivate={handleBulkDeactivate}
+    />
+  ), [handleDelete, handleBulkDeactivate]);
 
   return (
     <>
@@ -229,12 +231,7 @@ export default function BrandPage() {
         onAddClick={handleAddClick}
         isAdding={isDialogOpen} // <-- Proactive Bug Fix
         onExportClick={() => console.log("Export clicked")}
-        bulkActionsComponent={
-          <BrandBulkActions // Updated component
-            onDelete={handleDelete}
-            onDeactivate={handleBulkDeactivate}
-          />
-        }
+        bulkActionsComponent={bulkActionsComponent}
         searchColumn="name"
         searchPlaceholder="Filter brands by name..." // Updated text
         loadingSkeleton={<OrganizationPageSkeleton />}
