@@ -56,6 +56,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useRouter } from "next/navigation";
+import { ProductFormSkeleton } from "@/app/skeletons/product-form-skeleton";
 
 // --- ZOD SCHEMA ---
 const formSchema = z.object({
@@ -288,9 +289,7 @@ export function ProductForm() {
         container_id: Number(data.container_id),
       };
 
-      console.log("Submitting Payload:", payload);
 
-      // 3. API Call
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/products`, // Update this endpoint if it differs
         {
@@ -352,14 +351,12 @@ export function ProductForm() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-muted/30 rounded-lg">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+     <ProductFormSkeleton/>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 p-4 md:p-8">
+    <div className="min-h-screen bg-muted/40 p-4 md:p-4">
       <Form {...form}>
         <form className="max-w-7xl mx-auto space-y-8">
           {/* Header Section */}
