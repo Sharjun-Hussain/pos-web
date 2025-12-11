@@ -1,7 +1,7 @@
 // app/brands/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -74,7 +74,8 @@ export default function BrandPage() {
   }, [router, status]);
 
   // --- 5. UPDATED FETCH LOGIC ---
-  const fetchBrands = async () => {
+  // --- 5. UPDATED FETCH LOGIC ---
+  const fetchBrands = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
       setLoading(true);
@@ -99,13 +100,13 @@ export default function BrandPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchBrands(); // Updated function call
     }
-  }, [status, session]);
+  }, [status, fetchBrands]);
 
   // --- 6. UPDATED DIALOG HANDLERS ---
   const handleAddClick = () => {
@@ -113,10 +114,10 @@ export default function BrandPage() {
     setIsDialogOpen(true);
   };
 
-  const handleEditClick = (brand) => {
+  const handleEditClick = useCallback((brand) => {
     setEditingBrand(brand); // Updated state
     setIsDialogOpen(true);
-  };
+  }, []);
 
   const handleDialogSuccess = () => {
     setIsDialogOpen(false);
@@ -132,7 +133,7 @@ export default function BrandPage() {
   };
 
   // --- 7. UPDATED API HANDLERS ---
-  const handleDelete = async (ids) => {
+  const handleDelete = useCallback(async (ids) => {
     const isBulk = Array.isArray(ids);
     const idsToDelete = isBulk ? ids : [ids];
 
@@ -157,9 +158,9 @@ export default function BrandPage() {
         error: "Failed to delete.",
       }
     );
-  };
+  }, [session, fetchBrands]);
 
-  const handleToggleStatus = async (brand) => {
+  const handleToggleStatus = useCallback(async (brand) => {
     const action = brand.is_active ? "deactivate" : "activate";
     toast.promise(
       fetch(
@@ -178,9 +179,9 @@ export default function BrandPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchBrands]);
 
-  const handleBulkDeactivate = async (ids) => {
+  const handleBulkDeactivate = useCallback(async (ids) => {
     toast.promise(
       Promise.all(
         ids.map((id) =>
@@ -202,15 +203,15 @@ export default function BrandPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchBrands]);
 
   // 7. Get the columns by passing the handlers
-  const columns = getBrandColumns({
+  const columns = useMemo(() => getBrandColumns({
     // Updated function call
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  });
+  }), [handleDelete, handleToggleStatus, handleEditClick]);
 
   return (
     <>

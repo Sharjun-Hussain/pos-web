@@ -1,7 +1,7 @@
 // app/unit-measurement/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -73,7 +73,8 @@ export default function MeasurementUnitPage() {
   }, [router, status]);
 
   // --- 5. Updated Data Fetching ---
-  const fetchMeasurementUnits = async () => {
+  // --- 5. Updated Data Fetching ---
+  const fetchMeasurementUnits = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
       setLoading(true);
@@ -99,13 +100,13 @@ export default function MeasurementUnitPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchMeasurementUnits(); // Call the renamed function
     }
-  }, [status, session]);
+  }, [status, fetchMeasurementUnits]);
 
   // --- 6. Updated Click Handlers ---
   const handleAddClick = () => {
@@ -113,10 +114,10 @@ export default function MeasurementUnitPage() {
     setIsDialogOpen(true);
   };
 
-  const handleEditClick = (unit) => {
+  const handleEditClick = useCallback((unit) => {
     setEditingUnit(unit); // Use renamed state
     setIsDialogOpen(true);
-  };
+  }, []);
 
   const handleDialogSuccess = () => {
     setIsDialogOpen(false);
@@ -132,7 +133,7 @@ export default function MeasurementUnitPage() {
   };
 
   // --- 7. Updated Delete Handler ---
-  const handleDelete = async (ids) => {
+  const handleDelete = useCallback(async (ids) => {
     const isBulk = Array.isArray(ids);
     const idsToDelete = isBulk ? ids : [ids];
 
@@ -158,10 +159,10 @@ export default function MeasurementUnitPage() {
         error: "Failed to delete.",
       }
     );
-  };
+  }, [session, fetchMeasurementUnits]);
 
   // --- 8. Updated Toggle Status Handler ---
-  const handleToggleStatus = async (unit) => {
+  const handleToggleStatus = useCallback(async (unit) => {
     const action = unit.is_active ? "deactivate" : "activate";
     toast.promise(
       fetch(
@@ -181,10 +182,10 @@ export default function MeasurementUnitPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchMeasurementUnits]);
 
   // --- 9. Updated Bulk Deactivate Handler ---
-  const handleBulkDeactivate = async (ids) => {
+  const handleBulkDeactivate = useCallback(async (ids) => {
     toast.promise(
       Promise.all(
         ids.map((id) =>
@@ -207,14 +208,14 @@ export default function MeasurementUnitPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchMeasurementUnits]);
 
   // --- 10. Get Columns ---
-  const columns = getMeasurementUnitColumns({
+  const columns = useMemo(() => getMeasurementUnitColumns({
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  });
+  }), [handleDelete, handleToggleStatus, handleEditClick]);
 
   return (
     <>

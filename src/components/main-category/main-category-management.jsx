@@ -1,7 +1,7 @@
 // app/main_categorys/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -81,6 +81,7 @@ export default function MainCategoryPage() {
   const router = useRouter();
 
   // 5. Auth and Data Fetching Logic STAYS here
+  // 5. Auth and Data Fetching Logic STAYS here
   useEffect(() => {
     if (status === "unauthenticated") {
       const returnUrl = window.location.pathname + window.location.search;
@@ -88,8 +89,9 @@ export default function MainCategoryPage() {
     }
   }, [router, status]);
 
-  const fetchMainCategories = async () => {
+  const fetchMainCategories = useCallback(async () => {
     if (!session?.accessToken) return;
+    console.log("Fetching Main Categories...");
     try {
       setLoading(true);
       setError(null);
@@ -113,13 +115,14 @@ export default function MainCategoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.accessToken]); // Depend only on the token string
 
   useEffect(() => {
     if (status === "authenticated") {
+      console.log("Effect triggered: Fetching data");
       fetchMainCategories();
     }
-  }, [status, session]); // Re-run when session is ready
+  }, [status, fetchMainCategories]); // Re-run when session is ready
 
   const handleAddClick = () => {
     setEditingCategory(null); // No data = Create mode
@@ -127,10 +130,10 @@ export default function MainCategoryPage() {
   };
 
   // --- NEW EDIT HANDLER (no type on 'category') ---
-  const handleEditClick = (category) => {
+  const handleEditClick = useCallback((category) => {
     setEditingCategory(category); // Pass data = Edit mode
     setIsDialogOpen(true);
-  };
+  }, []);
 
   // --- NEW DIALOG SUCCESS HANDLER ---
   const handleDialogSuccess = () => {
@@ -146,7 +149,7 @@ export default function MainCategoryPage() {
       setEditingCategory(null); // Always clear state on close
     }
   };
-  const handleDelete = async (ids) => {
+  const handleDelete = useCallback(async (ids) => {
     // This now works for single or bulk!
     const isBulk = Array.isArray(ids);
     const idsToDelete = isBulk ? ids : [ids];
@@ -172,9 +175,9 @@ export default function MainCategoryPage() {
         error: "Failed to delete.",
       }
     );
-  };
+  }, [session, fetchMainCategories]);
 
-  const handleToggleStatus = async (main_category) => {
+  const handleToggleStatus = useCallback(async (main_category) => {
     const action = main_category.is_active ? "deactivate" : "activate";
     toast.promise(
       fetch(
@@ -193,9 +196,9 @@ export default function MainCategoryPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchMainCategories]);
 
-  const handleBulkDeactivate = async (ids) => {
+  const handleBulkDeactivate = useCallback(async (ids) => {
     toast.promise(
       Promise.all(
         ids.map((id) =>
@@ -217,14 +220,14 @@ export default function MainCategoryPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchMainCategories]);
 
   // 7. Get the columns by passing the handlers
-  const columns = getMainCategoryColumns({
+  const columns = useMemo(() => getMainCategoryColumns({
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  });
+  }), [handleDelete, handleToggleStatus, handleEditClick]);
 
   return (
     <>

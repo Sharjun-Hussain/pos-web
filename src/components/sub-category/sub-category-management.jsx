@@ -1,7 +1,7 @@
 // app/sub_categorys/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -70,7 +70,7 @@ export default function SubCategoryPage() {
     }
   }, [router, status]);
 
-  const fetchSubCategories = async () => {
+  const fetchSubCategories = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
       setLoading(true);
@@ -95,23 +95,23 @@ export default function SubCategoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchSubCategories();
     }
-  }, [status, session]);
+  }, [status, fetchSubCategories]);
 
   const handleAddClick = () => {
     setEditingCategory(null);
     setIsDialogOpen(true);
   };
 
-  const handleEditClick = (category) => {
+  const handleEditClick = useCallback((category) => {
     setEditingCategory(category);
     setIsDialogOpen(true);
-  };
+  }, []);
 
   const handleDialogSuccess = () => {
     setIsDialogOpen(false);
@@ -125,7 +125,7 @@ export default function SubCategoryPage() {
       setEditingCategory(null);
     }
   };
-  const handleDelete = async (ids) => {
+  const handleDelete = useCallback(async (ids) => {
     const isBulk = Array.isArray(ids);
     const idsToDelete = isBulk ? ids : [ids];
 
@@ -150,9 +150,9 @@ export default function SubCategoryPage() {
         error: "Failed to delete.",
       }
     );
-  };
+  }, [session, fetchSubCategories]);
 
-  const handleToggleStatus = async (sub_category) => {
+  const handleToggleStatus = useCallback(async (sub_category) => {
     const action = sub_category.is_active ? "deactivate" : "activate";
     toast.promise(
       fetch(
@@ -171,9 +171,9 @@ export default function SubCategoryPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchSubCategories]);
 
-  const handleBulkDeactivate = async (ids) => {
+  const handleBulkDeactivate = useCallback(async (ids) => {
     toast.promise(
       Promise.all(
         ids.map((id) =>
@@ -195,14 +195,14 @@ export default function SubCategoryPage() {
         error: "Action failed.",
       }
     );
-  };
+  }, [session, fetchSubCategories]);
 
   // 7. Get the columns by passing the handlers
-  const columns = getSubCategoryColumns({
+  const columns = useMemo(() => getSubCategoryColumns({
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  });
+  }), [handleDelete, handleToggleStatus, handleEditClick]);
 
   return (
     <>
