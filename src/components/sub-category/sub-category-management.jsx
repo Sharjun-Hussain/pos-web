@@ -15,6 +15,7 @@ import OrganizationPageSkeleton from "@/app/skeletons/Organization-skeleton";
 import { ResourceManagementLayout } from "../general/resource-management-layout";
 import { getSubCategoryColumns } from "./sub-category-column";
 import { SubCategoryDialog } from "./sub-category-dialog";
+import { usePermission } from "@/hooks/use-permission";
 
 // --- FIX 1: Component defined outside with safety check ---
 const SubCategoryBulkActions = ({ table, onDelete, onDeactivate }) => {
@@ -58,6 +59,13 @@ export default function SubCategoryPage() {
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermission();
+
+  // Permissions
+  const canCreate = hasPermission("Sub Category Create");
+  const canEdit = hasPermission("Sub Category Edit");
+  const canDelete = hasPermission("Sub Category Delete");
+  const canToggleStatus = hasPermission("Sub Category Status");
 
   // 1. Auth Check
   useEffect(() => {
@@ -202,7 +210,10 @@ export default function SubCategoryPage() {
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  }), [handleDelete, handleToggleStatus, handleEditClick]);
+    canEdit,
+    canDelete,
+    canToggleStatus,
+  }), [handleDelete, handleToggleStatus, handleEditClick, canEdit, canDelete, canToggleStatus]);
 
   // --- FIX 3: Memoize Bulk Actions Component ---
   // This prevents the infinite loop freeze
@@ -225,7 +236,7 @@ export default function SubCategoryPage() {
         headerTitle="Sub Category Management"
         headerDescription="Manage your sub categories, branches, and settings."
         addButtonLabel="Add Sub Category"
-        onAddClick={handleAddClick}
+        onAddClick={canCreate ? handleAddClick : null}
         isAdding={isNavigating}
         onExportClick={() => console.log("Export clicked")}
         bulkActionsComponent={bulkActionsComponent} // Use the memoized component

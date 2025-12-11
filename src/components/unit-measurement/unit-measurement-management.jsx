@@ -1,4 +1,3 @@
-// app/unit-measurement/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -14,9 +13,10 @@ import {
 import { Button } from "@/components/ui/button";
 import OrganizationPageSkeleton from "@/app/skeletons/Organization-skeleton";
 import { ResourceManagementLayout } from "../general/resource-management-layout";
-// --- 1. Updated Imports ---
-import { MeasurementUnitDialog } from "./unit-measurement-dialog";
 import { getMeasurementUnitColumns } from "./unit-measuremrent -column";
+import { MeasurementUnitDialog } from "./unit-measurement-dialog";
+import { usePermission } from "@/hooks/use-permission";
+
 // --- 2. Renamed Bulk Actions Component ---
 const UnitMeasurementBulkActions = ({ table, onDelete, onDeactivate }) => {
   if (!table) return null;
@@ -61,6 +61,13 @@ export default function MeasurementUnitPage() {
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermission();
+
+  // Permissions
+  const canCreate = hasPermission("Unit Measurement Create");
+  const canEdit = hasPermission("Unit Measurement Edit");
+  const canDelete = hasPermission("Unit Measurement Delete");
+  const canToggleStatus = hasPermission("Unit Measurement Status");
 
   // Auth check (remains the same)
   useEffect(() => {
@@ -70,7 +77,6 @@ export default function MeasurementUnitPage() {
     }
   }, [router, status]);
 
-  // --- 5. Updated Data Fetching ---
   // --- 5. Updated Data Fetching ---
   const fetchMeasurementUnits = useCallback(async () => {
     if (!session?.accessToken) return;
@@ -211,7 +217,10 @@ export default function MeasurementUnitPage() {
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  }), [handleDelete, handleToggleStatus, handleEditClick]);
+    canEdit,
+    canDelete,
+    canToggleStatus,
+  }), [handleDelete, handleToggleStatus, handleEditClick, canEdit, canDelete, canToggleStatus]);
 
   const bulkActionsComponent = useMemo(() => (
     <UnitMeasurementBulkActions
@@ -233,7 +242,7 @@ export default function MeasurementUnitPage() {
         headerTitle="Unit Measurement"
         headerDescription="Manage your measurement units (e.g., kg, L, cm)."
         addButtonLabel="Add Unit"
-        onAddClick={handleAddClick}
+        onAddClick={canCreate ? handleAddClick : null}
         isAdding={isDialogOpen}
         onExportClick={() => console.log("Export clicked")}
         bulkActionsComponent={bulkActionsComponent}

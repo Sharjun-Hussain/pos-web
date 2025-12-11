@@ -32,6 +32,9 @@ export const getMainCategoryColumns = ({
   onDelete,
   onToggleStatus,
   onEdit,
+  canEdit = false,
+  canDelete = false,
+  canToggleStatus = false,
 }) => [
   {
     id: "select",
@@ -113,6 +116,9 @@ export const getMainCategoryColumns = ({
     cell: ({ row }) => {
       const category = row.original;
 
+      // If no actions are allowed, don't render the menu
+      if (!canEdit && !canDelete && !canToggleStatus) return null;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -124,23 +130,31 @@ export const getMainCategoryColumns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-            <DropdownMenuItem onClick={() => onEdit(category)}>
-              Edit Category
-            </DropdownMenuItem>
+            {canEdit && (
+              <DropdownMenuItem onClick={() => onEdit(category)}>
+                Edit Category
+              </DropdownMenuItem>
+            )}
 
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-red-800"
-              onClick={() => onDelete(category.id)}
-            >
-              Delete
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-500"
-              onClick={() => onToggleStatus(category)}
-            >
-              {category.is_active ? "Deactivate" : "Activate"}
-            </DropdownMenuItem>
+            {(canDelete || canToggleStatus) && <DropdownMenuSeparator />}
+
+            {canDelete && (
+              <DropdownMenuItem
+                className="text-red-800"
+                onClick={() => onDelete(category.id)}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
+
+            {canToggleStatus && (
+              <DropdownMenuItem
+                className="text-red-500"
+                onClick={() => onToggleStatus(category)}
+              >
+                {category.is_active ? "Deactivate" : "Activate"}
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );

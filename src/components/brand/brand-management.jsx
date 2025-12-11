@@ -1,4 +1,3 @@
-// app/brands/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -14,10 +13,9 @@ import {
 import { Button } from "@/components/ui/button";
 import OrganizationPageSkeleton from "@/app/skeletons/Organization-skeleton";
 import { ResourceManagementLayout } from "../general/resource-management-layout";
-
-// --- 1. IMPORT YOUR NEW BRAND COMPONENTS ---
 import { getBrandColumns } from "./brand-column";
 import { BrandDialog } from "./brand-dialog";
+import { usePermission } from "@/hooks/use-permission";
 
 // --- 2. RENAMED COMPONENT ---
 const BrandBulkActions = ({ table, onDelete, onDeactivate }) => {
@@ -62,6 +60,13 @@ export default function BrandPage() {
   const [error, setError] = useState(null);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { hasPermission } = usePermission();
+
+  // Permissions
+  const canCreate = hasPermission("Brand Create");
+  const canEdit = hasPermission("Brand Edit");
+  const canDelete = hasPermission("Brand Delete");
+  const canToggleStatus = hasPermission("Brand Status");
 
   // Auth logic (remains the same)
   useEffect(() => {
@@ -206,7 +211,10 @@ export default function BrandPage() {
     onDelete: handleDelete,
     onToggleStatus: handleToggleStatus,
     onEdit: handleEditClick,
-  }), [handleDelete, handleToggleStatus, handleEditClick]);
+    canEdit,
+    canDelete,
+    canToggleStatus,
+  }), [handleDelete, handleToggleStatus, handleEditClick, canEdit, canDelete, canToggleStatus]);
 
   const bulkActionsComponent = useMemo(() => (
     <BrandBulkActions // Updated component
@@ -228,7 +236,7 @@ export default function BrandPage() {
         headerTitle="Brand Management" // Updated text
         headerDescription="Manage all your product brands and suppliers." // Updated text
         addButtonLabel="Add Brand" // Updated text
-        onAddClick={handleAddClick}
+        onAddClick={canCreate ? handleAddClick : null}
         isAdding={isDialogOpen} // <-- Proactive Bug Fix
         onExportClick={() => console.log("Export clicked")}
         bulkActionsComponent={bulkActionsComponent}
