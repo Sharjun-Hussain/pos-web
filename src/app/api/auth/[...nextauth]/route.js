@@ -9,7 +9,7 @@ export const authOptions = {
   session: {
     // Use JWTs for sessions
     strategy: "jwt",
-    
+
     // **CRITICAL:** Set the session maxAge to match your token's expiry
     // This will force the user to re-authenticate when the token expires.
     // This is the simplest strategy without a refresh token.
@@ -80,6 +80,33 @@ export const authOptions = {
           email: user.email,
           image: user.profileImage,
         };
+
+        // Fetch permissions from /me endpoint
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/me`, {
+            headers: {
+              Authorization: `Bearer ${user.accessToken}`,
+              Accept: "application/json",
+            },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === "success" && data.data?.user) {
+              const userData = data.data.user;
+              token.user = {
+                ...token.user,
+                roles: userData.roles || [],
+                // Flatten permissions if needed, or keep structure. 
+                // Based on user request, permissions are nested in roles.
+                // We might want to aggregate them for easier checking.
+                // For now, storing as is.
+              };
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user permissions:", error);
+        }
       }
       return token;
     },
@@ -92,8 +119,7 @@ export const authOptions = {
       // Pass the access token and user info to the client-side session
       session.accessToken = token.accessToken;
       session.user = token.user;
-      console.log(session);
-      
+
       return session;
     },
   },
