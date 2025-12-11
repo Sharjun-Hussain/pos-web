@@ -263,12 +263,54 @@ export function ProductForm() {
   }, [selectedMainCategory, form.setValue, form.getValues]);
 
   // --- SUBMIT ---
+// --- SUBMIT ---
   const handleServerSubmit = async (data, resetAfter = false) => {
     setSubmitting(true);
-    try {
-      console.log("Payload:", data);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    // 1. Check for Authentication
+    if (!session?.accessToken) {
+      toast.error("Authentication Error", {
+        description: "You are not logged in. Please reload or sign in again.",
+      });
+      setSubmitting(false);
+      return;
+    }
 
+    try {
+      // 2. Prepare Payload (ensure numbers are numbers)
+      const payload = {
+        ...data,
+        brand_id: Number(data.brand_id),
+        main_category_id: Number(data.main_category_id),
+        sub_category_id: Number(data.sub_category_id),
+        measurement_id: Number(data.measurement_id),
+        unit_id: Number(data.unit_id),
+        container_id: Number(data.container_id),
+      };
+
+      console.log("Submitting Payload:", payload);
+
+      // 3. API Call
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/products`, // Update this endpoint if it differs
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.accessToken}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        // Handle Server Errors (e.g., Validation failed)
+        throw new Error(result.message || "Failed to create product");
+      }
+
+      // 4. Success Handling
       toast.success("Product Saved Successfully", {
         description: `${data.name} has been added to your inventory.`,
         duration: 4000,
@@ -276,6 +318,7 @@ export function ProductForm() {
       });
 
       if (resetAfter) {
+        // Scenario A: Save & Create New (Reset Form)
         form.reset({
           code: "",
           name: "",
@@ -290,12 +333,17 @@ export function ProductForm() {
           container_id: data.container_id,
         });
 
+        // Focus back on the first input
         const codeInput = document.querySelector('input[name="code"]');
         if (codeInput) codeInput.focus();
+      } else {
+        // Scenario B: Save (Redirect to List)
+        router.push("/products"); // Update this route to your actual product list page
       }
     } catch (error) {
+      console.error("Submission Error:", error);
       toast.error("Failed to create product", {
-        description: "Please try again.",
+        description: error.message || "Please check your inputs and try again.",
       });
     } finally {
       setSubmitting(false);
