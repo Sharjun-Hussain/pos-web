@@ -92,7 +92,7 @@ export function SystemBreadcrumb() {
 
   return (
     <Breadcrumb>
-      <div className="flex gap-3 items-center">
+      <div className="flex bg-gray-50 gap-3 items-center border-b pb-1">
         {" "}
         <SidebarTrigger />
         <BreadcrumbList>{breadcrumbItems}</BreadcrumbList>
