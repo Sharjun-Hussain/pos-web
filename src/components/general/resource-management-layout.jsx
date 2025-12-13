@@ -12,9 +12,8 @@ import { DataTable } from "@/components/general/data-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { LoaderIcon, PlusCircle, Download, Search, x, X } from "lucide-react";
+import { LoaderIcon, PlusCircle, Download, Search, X } from "lucide-react";
 
-// A new, generic toolbar
 const ResourceTableToolbar = ({
   table,
   searchColumn,
@@ -27,18 +26,17 @@ const ResourceTableToolbar = ({
   const isFiltered = columnFilters.length > 0;
 
   return (
-    <div className="flex items-center justify-between space-x-4 mb-4">
-      <div className="flex flex-1 items-center space-x-2">
-        {/* Generic Search Input */}
-        <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-1 items-center space-x-2 w-full">
+        <div className="relative w-full max-w-sm group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
           <Input
             placeholder={searchPlaceholder || "Search..."}
             value={table.getColumn(searchColumn)?.getFilterValue() ?? ""}
             onChange={(event) =>
               table.getColumn(searchColumn)?.setFilterValue(event.target.value)
             }
-            className="pl-10"
+            className="pl-10 bg-white/50 border-slate-200 focus:bg-white transition-all shadow-sm"
           />
         </div>
         {filterComponents && filterComponents(table)}
@@ -46,22 +44,20 @@ const ResourceTableToolbar = ({
         {isFiltered && (
           <Button
             variant="ghost"
-            onClick={() => table.resetColumnFilters()} // Clears all filters
-            className="h-8 px-2 text-red-500 lg:px-3 hover:bg-red-50 hover:text-red-600"
+            onClick={() => table.resetColumnFilters()}
+            className="h-9 px-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
           >
             <X className="mr-1 h-4 w-4" />
-            Clear ({columnFilters.length})
+            Clear
           </Button>
         )}
       </div>
 
-      {/* Render bulk actions if any rows are selected */}
       {numSelected > 0 && bulkActionsComponent}
     </div>
   );
 };
 
-// The Main Generic Layout Component
 export const ResourceManagementLayout = ({
   data,
   columns,
@@ -71,18 +67,14 @@ export const ResourceManagementLayout = ({
   onRetry,
   headerTitle,
   headerDescription,
-  // Actions
   addButtonLabel = "Add New",
   onAddClick,
   onExportClick,
-  isAdding, // For loader on "Add" button
-  // Content Slots
+  isAdding,
   statCardsComponent,
   bulkActionsComponent,
-  // Config
   searchColumn,
   searchPlaceholder,
-  // Skeleton
   loadingSkeleton,
   filterComponents,
 }) => {
@@ -108,76 +100,101 @@ export const ResourceManagementLayout = ({
   });
 
   if (isLoading) {
-    return loadingSkeleton || <p>Loading...</p>;
+    return (
+      loadingSkeleton || (
+        <p className="p-8 text-center text-slate-500">Loading resources...</p>
+      )
+    );
   }
 
   if (isError) {
     return (
-      <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <p className="text-red-500 mb-4">Error: {errorMessage}</p>
-            {onRetry && (
-              <Button variant="outline" onClick={onRetry}>
-                Retry
-              </Button>
-            )}
-          </div>
-        </div>
+      <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
+        <p className="text-red-500 font-medium">
+          Unable to load data: {errorMessage}
+        </p>
+        {onRetry && (
+          <Button variant="outline" onClick={onRetry}>
+            Try Again
+          </Button>
+        )}
       </div>
     );
   }
 
-  // Pass the table instance to the bulk actions component
   const renderedBulkActions = bulkActionsComponent
     ? React.cloneElement(bulkActionsComponent, { table })
     : null;
 
   return (
-    <div className="hidden h-full flex-1 flex-col space-y-6 px-6 pb-6 pt-3 md:flex">
-      {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">{headerTitle}</h1>
-          <p className="text-muted-foreground">{headerDescription}</p>
-        </div>
-        <div className="flex items-center space-x-3">
-          {onExportClick && (
-            <Button variant="outline" className="gap-2" onClick={onExportClick}>
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-          )}
-          {onAddClick && (
-            <Button onClick={onAddClick} disabled={isAdding} className="gap-2">
-              {isAdding ? (
-                <LoaderIcon className="h-4 w-4 animate-spin" />
-              ) : (
-                <PlusCircle className="h-4 w-4" />
-              )}
-              {addButtonLabel}
-            </Button>
-          )}
-        </div>
+    <>
+      {/* --- UI/UX Scientist Layer: Global Backgrounds --- */}
+      <div className="fixed inset-0 -z-10 h-full w-full bg-slate-50 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-400/10 blur-[100px] rounded-full mix-blend-multiply"></div>
       </div>
 
-      {/* Statistics Cards (Rendered via prop) */}
-      {statCardsComponent}
+      <div className="relative flex flex-col space-y-6 p-6 md:p-8 ">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">
+              {headerTitle}
+            </h1>
+            <p className="text-sm text-slate-500 max-w-2xl font-medium">
+              {headerDescription}
+            </p>
+          </div>
+          <div className="flex items-center space-x-3">
+            {onExportClick && (
+              <Button
+                variant="outline"
+                className="gap-2 bg-white hover:bg-slate-50 border-slate-200 shadow-sm"
+                onClick={onExportClick}
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Export</span>
+              </Button>
+            )}
+            {onAddClick && (
+              <Button
+                onClick={onAddClick}
+                disabled={isAdding}
+                className="gap-2 bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-500/20 transition-all"
+              >
+                {isAdding ? (
+                  <LoaderIcon className="h-4 w-4 animate-spin" />
+                ) : (
+                  <PlusCircle className="h-4 w-4" />
+                )}
+                {addButtonLabel}
+              </Button>
+            )}
+          </div>
+        </div>
 
-      {/* Table Section */}
-      <Card>
-        <CardContent>
-          <ResourceTableToolbar
-            table={table}
-            searchColumn={searchColumn}
-            searchPlaceholder={searchPlaceholder}
-            bulkActionsComponent={renderedBulkActions}
-            filterComponents={filterComponents}
-          />
+        {/* Statistics Cards */}
+        {statCardsComponent && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {statCardsComponent}
+          </div>
+        )}
 
-          <DataTable table={table} columns={columns} />
-        </CardContent>
-      </Card>
-    </div>
+        {/* Main Content Card - Glassmorphism applied here */}
+        <Card className=" bg-white/80  overflow-hidden">
+          <CardContent className="p-6">
+            <ResourceTableToolbar
+              table={table}
+              searchColumn={searchColumn}
+              searchPlaceholder={searchPlaceholder}
+              bulkActionsComponent={renderedBulkActions}
+              filterComponents={filterComponents}
+            />
+
+            <DataTable table={table} columns={columns} />
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 };

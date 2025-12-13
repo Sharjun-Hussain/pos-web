@@ -103,6 +103,10 @@ export function MainCategoryDialog({
       toast.success(
         `Main Category ${isEditMode ? "updated" : "created"} successfully!`
       );
+      form.reset({
+        name: "",
+        description: "",
+      });
       onSuccess(); // Trigger refetch and close dialog
     } catch (error) {
       toast.error(error.message);
@@ -168,7 +172,10 @@ export function MainCategoryDialog({
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
                 ) : (
                   "Save"
                 )}

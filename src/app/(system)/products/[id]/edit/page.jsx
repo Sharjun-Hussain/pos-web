@@ -8,16 +8,16 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { LoaderIcon } from "lucide-react";
+import { ProductForm } from "@/components/products/new/product-form";
 
-import { OrganizationForm } from "@/components/organizations/new/organization-form";
-export default function EditOrganizationPage() {
+export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const { data: session, status } = useSession();
   const accessToken = session?.accessToken;
-  const organizationId = params.id;
+  const productId = params.id;
 
-  const [OrganizationData, setOrganizationData] = useState(null);
+  const [productData, setProductData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,18 +28,18 @@ export default function EditOrganizationPage() {
     }
   }, [status, router]);
 
-  // Effect for fetching organization data
+  // Effect for fetching Product data
   useEffect(() => {
     // Only fetch data if authenticated and we have a token
     if (status === "authenticated" && accessToken) {
-      const fetchOrganizationData = async () => {
+      const fetchProductData = async () => {
         setIsLoading(true);
         setError(null);
 
-        const organizationApiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/organizations/${organizationId}`;
+        const productApiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/${productId}`;
 
         try {
-          const response = await fetch(organizationApiUrl, {
+          const response = await fetch(productApiUrl, {
             headers: { Authorization: `Bearer ${accessToken}` },
           });
 
@@ -50,7 +50,7 @@ export default function EditOrganizationPage() {
 
           const data = await response.json();
           if (data.status === "success") {
-            setOrganizationData(data.data);
+            setProductData(data.data);
           } else {
             throw new Error(data.message || "Failed to fetch");
           }
@@ -58,23 +58,23 @@ export default function EditOrganizationPage() {
           const errorMessage =
             err instanceof Error ? err.message : "An unknown error occurred";
           setError(errorMessage);
-          toast.error(errorMessage || "Failed to load organization data.");
+          toast.error(errorMessage || "Failed to load product data.");
           console.error(err);
         } finally {
           setIsLoading(false);
         }
       };
 
-      fetchOrganizationData();
+      fetchProductData();
     }
-  }, [status, accessToken, organizationId]); // 'router' was removed, as it's not used in this effect
+  }, [status, accessToken, productId]); // 'router' was removed, as it's not used in this effect
 
   // Wait for both session authentication and data fetching
   if (isLoading || status === "loading") {
     return (
       <div className="flex gap-3 h-[80vh] w-full items-center justify-center">
         <LoaderIcon className="h-6 w-6 animate-spin text-muted-foreground" />{" "}
-        Loading Organization Details ...
+        Loading product Details ...
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function EditOrganizationPage() {
   if (error) {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center text-red-500">
-        <p>Failed to load organization data. Please try again.</p>
+        <p>Failed to load product data. Please try again.</p>
         <p className="text-sm text-muted-foreground">{error}</p>
       </div>
     );
@@ -90,17 +90,15 @@ export default function EditOrganizationPage() {
 
   return (
     <div className="px-6 pb-6 pt-3">
-      <div className="flex items-center justify-between space-y-2 mb-3">
+      {/* <div className="flex items-center justify-between space-y-2 mb-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            Edit Organization
-          </h2>
+          <h2 className="text-3xl font-bold tracking-tight">Edit Product</h2>
           <p className="text-muted-foreground">
-            Fill in the details below to edit this organization.
+            Fill in the details below to edit this product.
           </p>
         </div>
-      </div>
-      {OrganizationData && <OrganizationForm initialData={OrganizationData} />}
+      </div> */}
+      {productData && <ProductForm initialData={productData} />}
     </div>
   );
 }

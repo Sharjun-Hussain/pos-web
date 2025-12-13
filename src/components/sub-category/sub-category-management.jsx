@@ -33,16 +33,21 @@ const SubCategoryBulkActions = ({ table, onDelete, onDeactivate }) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => {
+        <DropdownMenuItem
+          onClick={() => {
             onDeactivate(selectedIds);
             table.resetRowSelection();
-        }}>
+          }}
+        >
           Deactivate Selected
         </DropdownMenuItem>
-        <DropdownMenuItem className="text-red-500" onClick={() => {
+        <DropdownMenuItem
+          className="text-red-500"
+          onClick={() => {
             onDelete(selectedIds);
             table.resetRowSelection();
-        }}>
+          }}
+        >
           Delete Selected
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -91,7 +96,7 @@ export default function SubCategoryPage() {
       );
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
-      
+
       if (data.status === "success") {
         setSubCategories(data.data.data || []);
       } else {
@@ -133,96 +138,119 @@ export default function SubCategoryPage() {
     if (!open) setEditingCategory(null);
   }, []);
 
-  const handleDelete = useCallback(async (ids) => {
-    const isBulk = Array.isArray(ids);
-    const idsToDelete = isBulk ? ids : [ids];
+  const handleDelete = useCallback(
+    async (ids) => {
+      const isBulk = Array.isArray(ids);
+      const idsToDelete = isBulk ? ids : [ids];
 
-    toast.promise(
-      Promise.all(
-        idsToDelete.map((id) =>
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories/${id}`,
-            {
-              method: "DELETE",
-              headers: { Authorization: `Bearer ${session.accessToken}` },
-            }
+      toast.promise(
+        Promise.all(
+          idsToDelete.map((id) =>
+            fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories/${id}`,
+              {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${session.accessToken}` },
+              }
+            )
           )
-        )
-      ),
-      {
-        loading: "Deleting...",
-        success: () => {
-          fetchSubCategories();
-          return "Sub Category(s) deleted successfully!";
-        },
-        error: "Failed to delete.",
-      }
-    );
-  }, [session, fetchSubCategories]);
-
-  const handleToggleStatus = useCallback(async (sub_category) => {
-    const action = sub_category.is_active ? "deactivate" : "activate";
-    toast.promise(
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories/${sub_category.id}/${action}`,
+        ),
         {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${session.accessToken}` },
+          loading: "Deleting...",
+          success: () => {
+            fetchSubCategories();
+            return "Sub Category(s) deleted successfully!";
+          },
+          error: "Failed to delete.",
         }
-      ),
-      {
-        loading: `${action === "activate" ? "Activating" : "Suspending"}...`,
-        success: () => {
-          fetchSubCategories(); 
-          return `Sub Category ${sub_category.name} ${action}d successfully!`;
-        },
-        error: "Action failed.",
-      }
-    );
-  }, [session, fetchSubCategories]);
+      );
+    },
+    [session, fetchSubCategories]
+  );
 
-  const handleBulkDeactivate = useCallback(async (ids) => {
-    toast.promise(
-      Promise.all(
-        ids.map((id) =>
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories/${id}/deactivate`,
-            {
-              method: "PATCH",
-              headers: { Authorization: `Bearer ${session.accessToken}` },
-            }
+  const handleToggleStatus = useCallback(
+    async (sub_category) => {
+      const action = sub_category.is_active ? "deactivate" : "activate";
+      toast.promise(
+        fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories/${sub_category.id}/${action}`,
+          {
+            method: "PATCH",
+            headers: { Authorization: `Bearer ${session.accessToken}` },
+          }
+        ),
+        {
+          loading: `${action === "activate" ? "Activating" : "Suspending"}...`,
+          success: () => {
+            fetchSubCategories();
+            return `Sub Category ${sub_category.name} ${action}d successfully!`;
+          },
+          error: "Action failed.",
+        }
+      );
+    },
+    [session, fetchSubCategories]
+  );
+
+  const handleBulkDeactivate = useCallback(
+    async (ids) => {
+      toast.promise(
+        Promise.all(
+          ids.map((id) =>
+            fetch(
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}/sub-categories/${id}/deactivate`,
+              {
+                method: "PATCH",
+                headers: { Authorization: `Bearer ${session.accessToken}` },
+              }
+            )
           )
-        )
-      ),
-      {
-        loading: "Deactivating...",
-        success: () => {
-          fetchSubCategories(); 
-          return "Sub Category(s) deactivated successfully!";
-        },
-        error: "Action failed.",
-      }
-    );
-  }, [session, fetchSubCategories]);
+        ),
+        {
+          loading: "Deactivating...",
+          success: () => {
+            fetchSubCategories();
+            return "Sub Category(s) deactivated successfully!";
+          },
+          error: "Action failed.",
+        }
+      );
+    },
+    [session, fetchSubCategories]
+  );
 
   // 4. Memoize Columns
-  const columns = useMemo(() => getSubCategoryColumns({
-    onDelete: handleDelete,
-    onToggleStatus: handleToggleStatus,
-    onEdit: handleEditClick,
-    canEdit,
-    canDelete,
-    canToggleStatus,
-  }), [handleDelete, handleToggleStatus, handleEditClick, canEdit, canDelete, canToggleStatus]);
+  const columns = useMemo(
+    () =>
+      getSubCategoryColumns({
+        onDelete: handleDelete,
+        onToggleStatus: handleToggleStatus,
+        onEdit: handleEditClick,
+        canEdit,
+        canDelete,
+        canToggleStatus,
+      }),
+    [
+      handleDelete,
+      handleToggleStatus,
+      handleEditClick,
+      canEdit,
+      canDelete,
+      canToggleStatus,
+    ]
+  );
 
   // --- FIX 3: Memoize Bulk Actions Component ---
   // This prevents the infinite loop freeze
-  const bulkActionsComponent = useMemo(() => (
-    <SubCategoryBulkActions
-      onDelete={handleDelete}
-      onDeactivate={handleBulkDeactivate}
-    />
-  ), [handleDelete, handleBulkDeactivate]);
+  const bulkActionsComponent = useMemo(
+    () => (
+      <SubCategoryBulkActions
+        onDelete={handleDelete}
+        onDeactivate={handleBulkDeactivate}
+      />
+    ),
+    [handleDelete, handleBulkDeactivate]
+  );
 
   return (
     <>
@@ -233,8 +261,33 @@ export default function SubCategoryPage() {
         isError={!!error}
         errorMessage={error}
         onRetry={fetchSubCategories}
-        headerTitle="Sub Category Management"
-        headerDescription="Manage your sub categories, branches, and settings."
+        headerTitle={
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary-100">
+              <svg
+                className="w-6 h-6 text-primary-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Sub Category Management
+              </h1>
+              <p className="text-gray-600 text-sm font-medium">
+                Manage your sub categories
+              </p>
+            </div>
+          </div>
+        }
         addButtonLabel="Add Sub Category"
         onAddClick={canCreate ? handleAddClick : null}
         isAdding={isNavigating}

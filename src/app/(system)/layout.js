@@ -23,12 +23,12 @@ export default function AppLayout({ children }) {
   
   return (
       <SidebarProvider defaultOpen={false}>
-        <div className="flex min-h-screen w-full">
+        <div className="flex  min-h-screen w-full">
           <AppSidebar variant="inset" />
           <div className="flex-1 overflow-x-auto"> {/* Container for scrolling */}
             <SidebarInset>
-           <div className='flex flex-col'>
-           <div className='mt-3 mx-6 rounded-sm'> <SystemBreadcrumb/></div>
+           <div className='flex bg-gray-50 flex-col'>
+           <div className='my-3 mx-6 bg-gray-50 rounded-sm'> <SystemBreadcrumb/></div>
               {children}
            </div>
             </SidebarInset>

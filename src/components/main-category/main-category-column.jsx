@@ -149,7 +149,9 @@ export const getMainCategoryColumns = ({
 
             {canToggleStatus && (
               <DropdownMenuItem
-                className="text-red-500"
+                className={`text-${
+                  category.is_active ? "red-500" : "green-500"
+                }`}
                 onClick={() => onToggleStatus(category)}
               >
                 {category.is_active ? "Deactivate" : "Activate"}

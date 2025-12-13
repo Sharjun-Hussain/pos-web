@@ -68,12 +68,12 @@ const formSchema = z.object({
   measurement_id: z.coerce.number().min(1, "Measurement Unit is required"),
   unit_id: z.coerce.number().min(1, "Unit is required"),
   container_id: z.coerce.number().min(1, "Container is required"),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(), // Allow null for API compatibility
   is_variant: z.boolean().default(false),
   is_active: z.boolean().default(true),
 });
 
-// --- REUSABLE SEARCHABLE SELECT COMPONENT ---
+// --- REUSABLE SEARCHABLE SELECT ---
 const SearchableSelect = ({
   form,
   name,
@@ -115,7 +115,9 @@ const SearchableSelect = ({
             </PopoverTrigger>
             <PopoverContent className="w-[250px] p-0" align="start">
               <Command>
-                <CommandInput placeholder={`Search ${label.toLowerCase()}...`} />
+                <CommandInput
+                  placeholder={`Search ${label.toLowerCase()}...`}
+                />
                 <CommandList>
                   <CommandEmpty>No results found.</CommandEmpty>
                   <CommandGroup>
@@ -152,11 +154,15 @@ const SearchableSelect = ({
   );
 };
 
-export function ProductForm() {
+// --- MAIN COMPONENT ---
+// Accepts initialData prop for Edit Mode
+export function ProductForm({ initialData = null }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { data: session } = useSession();
   const router = useRouter();
+
+  const isEditing = !!initialData; // Boolean flag to check mode
 
   // --- API DATA STATE ---
   const [options, setOptions] = useState({
@@ -168,28 +174,47 @@ export function ProductForm() {
     containers: [],
   });
 
+  // --- INIT FORM ---
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      code: "",
-      name: "",
-      brand_id: 0,
-      main_category_id: 0,
-      sub_category_id: 0,
-      measurement_id: 0,
-      unit_id: 0,
-      container_id: 0,
-      description: "",
-      is_variant: false,
-      is_active: true,
-    },
+    defaultValues: initialData
+      ? {
+          // --- EDIT MODE DEFAULTS ---
+          code: initialData.code || "",
+          name: initialData.name || "",
+          description: initialData.description || "",
+          // Ensure these are numbers for the Select components
+          brand_id: Number(initialData.brand_id) || 0,
+          main_category_id: Number(initialData.main_category_id) || 0,
+          sub_category_id: Number(initialData.sub_category_id) || 0,
+          measurement_id: Number(initialData.measurement_id) || 0,
+          unit_id: Number(initialData.unit_id) || 0,
+          container_id: Number(initialData.container_id) || 0,
+          // Ensure booleans
+          is_variant: Boolean(initialData.is_variant),
+          is_active: Boolean(initialData.is_active),
+        }
+      : {
+          // --- CREATE MODE DEFAULTS ---
+          code: "",
+          name: "",
+          brand_id: 0,
+          main_category_id: 0,
+          sub_category_id: 0,
+          measurement_id: 0,
+          unit_id: 0,
+          container_id: 0,
+          description: "",
+          is_variant: false,
+          is_active: true,
+        },
   });
 
   const selectedMainCategory = form.watch("main_category_id");
 
-  // --- FETCH DATA ---
+  // --- FETCH DROPDOWN OPTIONS ---
   useEffect(() => {
-    let isMounted = true; // 1. Safety flag
+    let isMounted = true;
 
     const fetchOptions = async () => {
       try {
@@ -213,7 +238,7 @@ export function ProductForm() {
           )
         );
 
-        if (isMounted) { // 2. Only update if mounted
+        if (isMounted) {
           setOptions({
             mainCategories: responses[0].data || [],
             brands: responses[1].data || [],
@@ -227,11 +252,7 @@ export function ProductForm() {
         if (isMounted) {
           console.error("Failed to fetch form options:", error);
           toast.error("Network Error", {
-            description: "Could not load dropdown options. Please refresh.",
-            action: {
-              label: "Refresh",
-              onClick: () => window.location.reload(),
-            },
+            description: "Could not load dropdown options.",
           });
         }
       } finally {
@@ -244,9 +265,9 @@ export function ProductForm() {
     }
 
     return () => {
-      isMounted = false; // 3. Cleanup: mark as unmounted
+      isMounted = false;
     };
-  }, [session]); // Removed 'toast' to prevent unnecessary re-runs
+  }, [session]);
 
   // --- FILTER SUB-CATEGORIES ---
   const filteredSubCategories = useMemo(() => {
@@ -256,29 +277,38 @@ export function ProductForm() {
     );
   }, [selectedMainCategory, options.subCategories]);
 
-  // Reset Sub Category when Main Category changes
+  // Reset Sub Category when Main Category changes (User Interaction Only)
   useEffect(() => {
-    if (form.getValues("sub_category_id")) {
-      form.setValue("sub_category_id", 0);
+    // Only reset if we are not loading initial data for the first time
+    // We check if the current value matches the filtered list to allow initial load
+    const currentSub = form.getValues("sub_category_id");
+    if (currentSub && selectedMainCategory) {
+      const isValid = filteredSubCategories.find(
+        (sub) => sub.id === currentSub
+      );
+      if (!isValid && filteredSubCategories.length > 0 && !loading) {
+        form.setValue("sub_category_id", 0);
+      }
     }
-  }, [selectedMainCategory, form.setValue, form.getValues]);
+  }, [
+    selectedMainCategory,
+    form.setValue,
+    form.getValues,
+    filteredSubCategories,
+    loading,
+  ]);
 
-  // --- SUBMIT ---
-// --- SUBMIT ---
+  // --- SUBMIT HANDLER ---
   const handleServerSubmit = async (data, resetAfter = false) => {
     setSubmitting(true);
-    
-    // 1. Check for Authentication
+
     if (!session?.accessToken) {
-      toast.error("Authentication Error", {
-        description: "You are not logged in. Please reload or sign in again.",
-      });
+      toast.error("Authentication Error");
       setSubmitting(false);
       return;
     }
 
     try {
-      // 2. Prepare Payload (ensure numbers are numbers)
       const payload = {
         ...data,
         brand_id: Number(data.brand_id),
@@ -289,60 +319,64 @@ export function ProductForm() {
         container_id: Number(data.container_id),
       };
 
+      // --- DYNAMIC URL & METHOD ---
+      const url = isEditing
+        ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/products/${initialData.id}`
+        : `${process.env.NEXT_PUBLIC_API_BASE_URL}/products`;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/products`, // Update this endpoint if it differs
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${session.accessToken}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const method = isEditing ? "PUT" : "POST"; // Use PUT or PATCH based on API
+
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       const result = await response.json();
 
       if (!response.ok) {
-        // Handle Server Errors (e.g., Validation failed)
-        throw new Error(result.message || "Failed to create product");
+        throw new Error(
+          result.message ||
+            `Failed to ${isEditing ? "update" : "create"} product`
+        );
       }
 
-      // 4. Success Handling
-      toast.success("Product Saved Successfully", {
-        description: `${data.name} has been added to your inventory.`,
+      toast.success(isEditing ? "Product Updated" : "Product Created", {
+        description: `${data.name} has been ${
+          isEditing ? "updated" : "added"
+        }.`,
         duration: 4000,
         icon: "✅",
       });
 
-      if (resetAfter) {
-        // Scenario A: Save & Create New (Reset Form)
+      if (resetAfter && !isEditing) {
+        // Create Mode: Reset and stay
         form.reset({
           code: "",
           name: "",
           description: "",
           is_variant: false,
           is_active: true,
-          brand_id: data.brand_id,
+          brand_id: data.brand_id, // Keep previous selections for ease
           main_category_id: data.main_category_id,
           sub_category_id: data.sub_category_id,
           measurement_id: data.measurement_id,
           unit_id: data.unit_id,
           container_id: data.container_id,
         });
-
-        // Focus back on the first input
         const codeInput = document.querySelector('input[name="code"]');
         if (codeInput) codeInput.focus();
       } else {
-        // Scenario B: Save (Redirect to List)
-        router.push("/products"); // Update this route to your actual product list page
+        // Edit Mode OR Create & Exit: Go back
+        router.push("/products");
       }
     } catch (error) {
       console.error("Submission Error:", error);
-      toast.error("Failed to create product", {
-        description: error.message || "Please check your inputs and try again.",
+      toast.error("Error", {
+        description: error.message || "Something went wrong.",
       });
     } finally {
       setSubmitting(false);
@@ -350,9 +384,7 @@ export function ProductForm() {
   };
 
   if (loading) {
-    return (
-     <ProductFormSkeleton/>
-    );
+    return <ProductFormSkeleton />;
   }
 
   return (
@@ -364,45 +396,49 @@ export function ProductForm() {
             <div>
               <div className="flex items-center gap-4 mb-2">
                 <Button
-                  type="button" // CRITICAL: Prevents form submit
+                  type="button"
                   variant="ghost"
                   size="icon"
                   onClick={(e) => {
-                    e.preventDefault(); // CRITICAL: Stops event propagation
+                    e.preventDefault();
                     router.back();
                   }}
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                  Create Product
+                  {isEditing ? "Edit Product" : "Create Product"}
                 </h2>
               </div>
               <p className="text-muted-foreground ml-14">
-                Add a new item to your inventory system.
+                {isEditing
+                  ? `Update details for ${initialData?.name || "this product"}.`
+                  : "Add a new item to your inventory system."}
               </p>
             </div>
-            <div className="hidden md:flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  form.reset();
-                }}
-                className="bg-background"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Reset
-              </Button>
-            </div>
+            {!isEditing && (
+              <div className="hidden md:flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    form.reset();
+                  }}
+                  className="bg-background"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Reset
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* --- LEFT COLUMN (Primary Info) --- */}
             <div className="lg:col-span-8 space-y-8">
               {/* Card 1: Identity */}
-              <Card className="border-t-4 border-t-blue-500 shadow-sm">
+              <Card className="border-t-4 border-t-blue-500 shadow-sm py-5">
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Box className="h-5 w-5 text-blue-500" />
@@ -476,7 +512,7 @@ export function ProductForm() {
               </Card>
 
               {/* Card 2: Classification & Specs */}
-              <Card className="border-t-4 border-t-purple-500 shadow-sm">
+              <Card className="border-t-4 border-t-purple-500 shadow-sm py-5">
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <LayoutGrid className="h-5 w-5 text-purple-500" />
@@ -515,6 +551,7 @@ export function ProductForm() {
                           ? "Select Sub Category"
                           : "Select Main Category First"
                       }
+                      // In edit mode, if main category is set, enable this
                       disabled={!selectedMainCategory}
                     />
                     <SearchableSelect
@@ -545,7 +582,7 @@ export function ProductForm() {
 
             {/* --- RIGHT COLUMN (Settings & Actions) --- */}
             <div className="lg:col-span-4 space-y-8">
-              <Card className="border-t-4 border-t-green-500 shadow-sm">
+              <Card className="border-t-4 border-t-green-500 shadow-sm py-5">
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Settings2 className="h-5 w-5 text-green-500" />
@@ -600,26 +637,36 @@ export function ProductForm() {
               </Card>
 
               <div className="grid gap-3 sticky top-4">
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-white shadow-lg"
-                  disabled={submitting}
-                  onClick={form.handleSubmit((d) => handleServerSubmit(d, true))}
-                >
-                  {submitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <PlusCircle className="w-4 h-4 mr-2" />
-                  )}
-                  Save & Add Another
-                </Button>
+                {/* Only show "Save & Add Another" in Create Mode */}
+                {!isEditing && (
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="w-full bg-slate-800 hover:bg-slate-700 text-white shadow-lg"
+                    disabled={submitting}
+                    onClick={form.handleSubmit((d) =>
+                      handleServerSubmit(d, true)
+                    )}
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                    )}
+                    Save & Add Another
+                  </Button>
+                )}
 
                 <Button
                   type="button"
                   size="lg"
-                  variant="secondary"
-                  className="w-full shadow-sm border bg-white hover:bg-gray-100 text-slate-900"
+                  variant={isEditing ? "default" : "secondary"}
+                  className={cn(
+                    "w-full shadow-sm border",
+                    !isEditing
+                      ? "bg-white hover:bg-gray-100 text-slate-900"
+                      : ""
+                  )}
                   disabled={submitting}
                   onClick={form.handleSubmit((d) =>
                     handleServerSubmit(d, false)
@@ -630,7 +677,7 @@ export function ProductForm() {
                   ) : (
                     <Save className="w-4 h-4 mr-2" />
                   )}
-                  Save Product
+                  {isEditing ? "Update Product" : "Save Product"}
                 </Button>
               </div>
             </div>
